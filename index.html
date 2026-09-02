@@ -186,9 +186,9 @@ const screenLight=new THREE.PointLight(0xC8E89A,0,2.4); scene.add(screenLight);
 
 // ポリゴン多め
 const mat=c=>new THREE.MeshLambertMaterial({color:c});
-function box(w,h,d,c){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d,2,2,2),mat(c));m.castShadow=true;m.receiveShadow=true;return m;}
-function cyl(rt,rb,h,c,s=28){const m=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,s,2),mat(c));m.castShadow=true;m.receiveShadow=true;return m;}
-function sph(r,c,s=30){const m=new THREE.Mesh(new THREE.SphereGeometry(r,s,Math.round(s*0.65)),mat(c));m.castShadow=true;m.receiveShadow=true;return m;}
+function box(w,h,d,c){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d,3,3,3),mat(c));m.castShadow=true;m.receiveShadow=true;return m;}
+function cyl(rt,rb,h,c,s=36){const m=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,s,3),mat(c));m.castShadow=true;m.receiveShadow=true;return m;}
+function sph(r,c,s=40){const m=new THREE.Mesh(new THREE.SphereGeometry(r,s,Math.round(s*0.7)),mat(c));m.castShadow=true;m.receiveShadow=true;return m;}
 function cone(r,h,c,s=16){const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,s,2),mat(c));m.castShadow=true;m.receiveShadow=true;return m;}
 function put(p,m,x,y,z){m.position.set(x,y,z);p.add(m);return m;}
 const rnd=(a,b)=>a+Math.random()*(b-a);
@@ -375,7 +375,8 @@ const desk=new THREE.Group(); desk.position.set(0,0,2.48); world.add(desk);
 put(desk,box(1.3,0.06,0.55,C.wood),0,0.40,0);
 [[-0.54,-0.19],[0.54,-0.19],[-0.54,0.19],[0.54,0.19]].forEach(p=>put(desk,box(0.07,0.38,0.07,C.woodOld),p[0],0.2,p[1]));
 // ノートパソコンは斜めに置いて、蓋が手前をふさがないようにする
-const laptop=new THREE.Group(); laptop.position.set(0.26,0.43,0.0); laptop.rotation.y=-0.42; desk.add(laptop);
+const DESK_YAW=-0.42;
+const laptop=new THREE.Group(); laptop.position.set(0.26,0.43,0.0); laptop.rotation.y=DESK_YAW; desk.add(laptop);
 put(laptop,box(0.56,0.025,0.34,0x8E949A),0,0,0);
 const lidPivot=new THREE.Group(); lidPivot.position.set(0,0.01,0.16); laptop.add(lidPivot);
 put(lidPivot,box(0.56,0.30,0.02,0x8E949A),0,0.15,0);
@@ -389,41 +390,54 @@ const man=new THREE.Group(); world.add(man);
 const bodyPivot=new THREE.Group(); man.add(bodyPivot);
 const headPivot=new THREE.Group(); headPivot.position.y=0.86; bodyPivot.add(headPivot);
 
-const belly=sph(0.44,C.shirt,34); belly.scale.set(1.05,0.92,0.88); put(bodyPivot,belly,0,0.62,0);
-const bellyLow=sph(0.42,C.shirt,30); bellyLow.scale.set(1.0,0.72,0.9); put(bodyPivot,bellyLow,0,0.42,0.04);
-put(bodyPivot,cyl(0.4,0.38,0.2,C.pants,30),0,0.24,0);
+const belly=sph(0.44,C.shirt,48); belly.scale.set(1.05,0.92,0.88); put(bodyPivot,belly,0,0.62,0);
+const bellyLow=sph(0.42,C.shirt,44); bellyLow.scale.set(1.0,0.72,0.9); put(bodyPivot,bellyLow,0,0.42,0.04);
+put(bodyPivot,cyl(0.4,0.38,0.2,C.pants,40),0,0.24,0);
 put(bodyPivot,box(0.66,0.06,0.5,0x4A566A),0,0.33,0);
-const head=sph(0.36,C.skin,34); head.scale.set(1,0.95,0.96); put(headPivot,head,0,0.26,0);
-const shine=sph(0.31,0xF2CDA6,26); shine.scale.set(0.9,0.6,0.85); put(headPivot,shine,0,0.36,0.02);
-const hairL=sph(0.19,0x6B5B4E,20); hairL.scale.set(0.55,0.75,0.95); put(headPivot,hairL,-0.31,0.2,0);
-const hairR=sph(0.19,0x6B5B4E,20); hairR.scale.set(0.55,0.75,0.95); put(headPivot,hairR,0.31,0.2,0);
-const hairB=sph(0.2,0x6B5B4E,20); hairB.scale.set(0.85,0.5,0.5); put(headPivot,hairB,0,0.16,-0.26);
-const earL=sph(0.09,C.skinD,16); earL.scale.set(0.5,1,0.8); put(headPivot,earL,-0.35,0.24,0);
-const earR=sph(0.09,C.skinD,16); earR.scale.set(0.5,1,0.8); put(headPivot,earR,0.35,0.24,0);
-put(headPivot,sph(0.05,0x3A322B,14),-0.13,0.29,0.31);
-put(headPivot,sph(0.05,0x3A322B,14),0.13,0.29,0.31);
-put(headPivot,sph(0.07,C.skinD,16),0,0.21,0.35);
-const stub=sph(0.3,0xBFA089,24); stub.scale.set(0.95,0.42,0.7); put(headPivot,stub,0,0.08,0.12);
+const head=sph(0.36,C.skin,48); head.scale.set(1,0.95,0.96); put(headPivot,head,0,0.26,0);
+const shineMat=new THREE.MeshPhongMaterial({color:0xFFEBC8,specular:0xFFFFFF,shininess:180});
+const shine=sph(0.325,0xFFEBC8,32); shine.material=shineMat; shine.scale.set(0.96,0.68,0.98); put(headPivot,shine,0,0.37,0.02);
+const glint=sph(0.09,0xFFFFFF,20); glint.material=new THREE.MeshPhongMaterial({color:0xFFFFFF,specular:0xFFFFFF,shininess:220,transparent:true,opacity:0.75});
+glint.scale.set(1,0.5,1); put(headPivot,glint,-0.04,0.46,0.14);
+const hairL=sph(0.19,0x6B5B4E,26); hairL.scale.set(0.5,0.6,0.9); put(headPivot,hairL,-0.33,0.16,0);
+const hairR=sph(0.19,0x6B5B4E,26); hairR.scale.set(0.5,0.6,0.9); put(headPivot,hairR,0.33,0.16,0);
+const hairB=sph(0.2,0x6B5B4E,24); hairB.scale.set(0.85,0.42,0.5); put(headPivot,hairB,0,0.12,-0.27);
+const earL=sph(0.09,C.skinD,20); earL.scale.set(0.5,1,0.8); put(headPivot,earL,-0.35,0.24,0);
+const earR=sph(0.09,C.skinD,20); earR.scale.set(0.5,1,0.8); put(headPivot,earR,0.35,0.24,0);
+put(headPivot,sph(0.05,0x3A322B,18),-0.13,0.29,0.31);
+put(headPivot,sph(0.05,0x3A322B,18),0.13,0.29,0.31);
+put(headPivot,sph(0.07,C.skinD,20),0,0.21,0.35);
+const stub=sph(0.3,0xBFA089,32); stub.scale.set(0.95,0.42,0.7); put(headPivot,stub,0,0.08,0.12);
 put(headPivot,box(0.16,0.035,0.03,0x5A4B3F),-0.11,0.38,0.32);
 put(headPivot,box(0.16,0.035,0.03,0x5A4B3F),0.11,0.38,0.32);
 const mouth=box(0.15,0.025,0.02,0x6B4A42); put(headPivot,mouth,0,0.09,0.35);
+const sweatMat=new THREE.MeshPhongMaterial({color:0xCFEBF5,specular:0xFFFFFF,shininess:150,transparent:true,opacity:0.82});
+function sweatDrop(x,y,z,s){
+  const g=new THREE.Group();
+  const top=new THREE.Mesh(new THREE.SphereGeometry(0.05,16,12),sweatMat);
+  const bot=new THREE.Mesh(new THREE.ConeGeometry(0.05,0.1,16),sweatMat);
+  top.position.y=0.025; bot.position.y=-0.05; bot.rotation.x=Math.PI;
+  g.add(top,bot); g.scale.setScalar(s||1); g.position.set(x,y,z); headPivot.add(g);
+  return g;
+}
+const sweatL=sweatDrop(-0.37,0.32,0.10,1);
 
 function arm(sx){
-  const up=new THREE.Group(); up.position.set(sx*0.42,0.74,0); bodyPivot.add(up);
-  put(up,cyl(0.095,0.085,0.30,C.skin,20),0,-0.15,0);
-  put(up,sph(0.095,C.skin,18),0,-0.30,0);
+  const up=new THREE.Group(); up.position.set(sx*0.48,0.79,0.05); bodyPivot.add(up);
+  put(up,cyl(0.095,0.085,0.30,C.skin,26),0,-0.15,0);
+  put(up,sph(0.095,C.skin,24),0,-0.30,0);
   const fore=new THREE.Group(); fore.position.y=-0.30; up.add(fore);
-  put(fore,cyl(0.082,0.075,0.26,C.skin,20),0,-0.13,0);
-  put(fore,sph(0.098,C.skin,20),0,-0.28,0);
+  put(fore,cyl(0.082,0.075,0.26,C.skin,26),0,-0.13,0);
+  put(fore,sph(0.098,C.skin,26),0,-0.28,0);
   for(let i=-1;i<=1;i++) put(fore,box(0.032,0.06,0.1,C.skin),i*0.048,-0.33,0.05);
   return {up,fore};
 }
 const aL=arm(-1), aR=arm(1);
 function leg(sx){
   const up=new THREE.Group(); up.position.set(sx*0.19,0.24,0); bodyPivot.add(up);
-  put(up,cyl(0.115,0.1,0.22,C.skin,20),0,-0.11,0);
+  put(up,cyl(0.115,0.1,0.22,C.skin,26),0,-0.11,0);
   const sh=new THREE.Group(); sh.position.y=-0.22; up.add(sh);
-  put(sh,cyl(0.095,0.088,0.2,C.skin,20),0,-0.1,0);
+  put(sh,cyl(0.095,0.088,0.2,C.skin,26),0,-0.1,0);
   put(sh,box(0.17,0.07,0.28,0x6B5B4E),0,-0.21,0.05);
   return {up,sh};
 }
@@ -483,14 +497,25 @@ cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);pts.set(
   if(pts.size===2){const a=[...pts.values()];pinch0=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);zoom0=zoom;}});
 cv.addEventListener('pointermove',e=>{
   const p=pts.get(e.pointerId); if(!p) return;
-  if(pts.size===1){az-=(e.clientX-p.x)*0.008;el=Math.max(0.28,Math.min(1.05,el+(e.clientY-p.y)*0.005));updCam();}
+  if(pts.size===1){az-=(e.clientX-p.x)*0.008;el=Math.max(0.06,Math.min(1.38,el+(e.clientY-p.y)*0.005));updCam();hideDragHint();}
   p.x=e.clientX;p.y=e.clientY;
   if(pts.size===2){const a=[...pts.values()];const d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);
-    if(pinch0>0){zoom=Math.max(0.65,Math.min(2.4,zoom0*d/pinch0));updCam();}}
+    if(pinch0>0){zoom=Math.max(0.55,Math.min(3.4,zoom0*d/pinch0));updCam();}}
 });
 function up(e){pts.delete(e.pointerId);if(pts.size<2)pinch0=0;}
 cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up);
-cv.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.max(0.65,Math.min(2.4,zoom*(e.deltaY>0?0.94:1.06)));updCam();},{passive:false});
+cv.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.max(0.55,Math.min(3.4,zoom*(e.deltaY>0?0.94:1.06)));updCam();hideDragHint();},{passive:false});
+let dragHintEl=null;
+function hideDragHint(){ if(dragHintEl){dragHintEl.style.opacity='0'; setTimeout(()=>dragHintEl&&dragHintEl.remove(),400); dragHintEl=null; } }
+requestAnimationFrame(()=>{
+  dragHintEl=document.createElement('div');
+  dragHintEl.textContent='ドラッグで角度を変えられます';
+  dragHintEl.style.cssText='position:absolute;left:50%;bottom:118px;transform:translateX(-50%);'+
+    'background:rgba(63,58,52,.72);color:#fff;font-size:11px;font-weight:700;padding:6px 12px;'+
+    'border-radius:999px;pointer-events:none;transition:opacity .4s;z-index:5;white-space:nowrap;';
+  phone.appendChild(dragHintEl);
+  setTimeout(hideDragHint,4500);
+});
 
 // ===== 発話 =====
 const LINES={
@@ -631,7 +656,7 @@ function tick(){
   const atDesk=(state==='FOCUS')&&!walking&&d2<=0.3&&decayLv===0;
   sitAmt+=(((atDesk||decayLv===5)?1:0)-sitAmt)*Math.min(1,dt*4);
   lieAmt+=(((decayLv>=6)?1:0)-lieAmt)*Math.min(1,dt*2.5);
-  if(atDesk||decayLv>=1) yawTarget=0;
+  if(decayLv>=1) yawTarget=0; else if(atDesk) yawTarget=DESK_YAW;
   let dy=yawTarget-man.rotation.y;
   while(dy>Math.PI)dy-=Math.PI*2; while(dy<-Math.PI)dy+=Math.PI*2;
   man.rotation.y+=dy*Math.min(1,dt*5);
@@ -646,9 +671,9 @@ function tick(){
   mouth.scale.set(1,1,1);
 
   if(atDesk&&state==='FOCUS'){
-    const tap=Math.sin(poseT*13)*0.10, tap2=Math.sin(poseT*13+1.9)*0.10;
-    Lx=-1.05+tap; Rx=-1.05+tap2; Lz=0.34; Rz=-0.30; Lf=-0.5; Rf=-0.5;
-    lean=0.26; hx=0.22; hy=-0.12;
+    const tap=Math.sin(poseT*13)*0.16, tap2=Math.sin(poseT*13+1.9)*0.16;
+    Lx=-1.05+tap; Rx=-1.05+tap2; Lz=0.34; Rz=-0.30; Lf=-0.5+tap*0.7; Rf=-0.5+tap2*0.7;
+    lean=0.26; hx=0.22; hy=-0.12; k=10;
   } else if(decayLv===1){
     const c=poseT%4.2;
     if(c<1.3){const e=Math.sin(c/1.3*Math.PI);

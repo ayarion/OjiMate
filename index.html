@@ -1,0 +1,756 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OjiMate — 画面デモ</title>
+<meta name="description" content="集中するとおじさんも働く、サボるとおじさんもサボる。表裏一体の相棒と暮らす集中アプリ OjiMate の画面デモ。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#3F3A34;--ink-soft:#9B8F80;--sun:#FFC64B;--sky:#6FCBEE;--coral:#FF8A6B;--mint:#4FCFAE;--grape:#B08BF0;
+    --card:rgba(255,255,255,.94);--shadow:0 3px 0 rgba(63,58,52,.09),0 6px 16px rgba(63,58,52,.10)}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden;background:#26241F}
+  body{font-family:"Zen Maru Gothic","Hiragino Maru Gothic ProN",system-ui,sans-serif;font-weight:500;
+    color:var(--ink);-webkit-font-smoothing:antialiased;display:flex;align-items:center;justify-content:center}
+  #phone{position:relative;width:min(100vw,calc(100vh*9/16));height:min(100vh,calc(100vw*16/9));
+    overflow:hidden;background:#A9D3E2;border-radius:26px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+  @media (max-aspect-ratio:9/16){#phone{border-radius:0}}
+  #stage{position:absolute;inset:0}
+  canvas{display:block;touch-action:none}
+  #ui{position:absolute;inset:0;display:flex;flex-direction:column;padding:9px;gap:6px;pointer-events:none}
+  #ui > *{pointer-events:auto}
+  .spacer{flex:1;pointer-events:none}
+  .card{background:var(--card);border-radius:16px;padding:9px 12px;box-shadow:var(--shadow)}
+  #topRow{display:flex;gap:6px;align-items:flex-start}
+  #home{flex:1}
+  #stageName{font-size:14px;font-weight:700}
+  #chips{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap}
+  .chip{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:999px;background:#FFF0D2;color:#B27A18}
+  .chip.b{background:#DCF3FF;color:#1F7EA1}
+  .chip.c{background:#E2FBF2;color:#1B8A6C}
+  #bar{height:6px;border-radius:999px;background:#F0EBE2;margin-top:7px;overflow:hidden}
+  #barFill{height:100%;width:0;border-radius:999px;background:var(--sun);transition:width .4s}
+  #barNote{font-size:9.5px;color:var(--ink-soft);margin-top:4px;font-weight:700}
+  #logList{display:flex;gap:4px;overflow-x:auto;margin-top:6px;scrollbar-width:none}
+  #logList::-webkit-scrollbar{display:none}
+  .rec{flex:none;font-size:9.5px;font-weight:700;padding:3px 7px;border-radius:8px;white-space:nowrap}
+  .rec.ok{background:#E2FBF2;color:#1B8A6C}
+  .rec.ng{background:#FFEFE9;color:#C4633F}
+  #logEmpty{font-size:9.5px;color:var(--ink-soft)}
+  #timer{padding:7px 10px;display:flex;align-items:center;gap:8px;opacity:.25;transition:opacity .25s}
+  #timer.on{opacity:1}
+  #timer.pause{opacity:.45}
+  #ring{width:28px;height:28px;flex:none}
+  #ring circle{fill:none;stroke-width:5;stroke-linecap:round}
+  #ringBg{stroke:#EFE9E0}#ringFg{stroke:var(--mint);transition:stroke-dashoffset .25s linear}
+  #tLeft{font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums}
+  #rel{display:flex;align-items:center;gap:8px;padding:6px 9px}
+  #rel h3{margin:0;font-size:10px;font-weight:700;color:var(--ink-soft);white-space:nowrap}
+  .seg{display:flex;background:#F3EFE8;border-radius:11px;padding:2px;gap:2px;flex:1}
+  .seg button{flex:1;border:0;background:transparent;border-radius:9px;padding:5px 0;font-family:inherit;
+    font-weight:700;font-size:11px;color:var(--ink-soft);cursor:pointer;transition:.16s}
+  .seg button[aria-pressed="true"]{background:var(--sun);color:#6B4A00;box-shadow:0 2px 0 rgba(180,130,10,.28)}
+  #say{position:relative;padding:9px 13px;min-height:44px;display:flex;align-items:center}
+  #say::after{content:"";position:absolute;left:24px;bottom:-7px;width:14px;height:14px;
+    background:var(--card);border-radius:3px;transform:rotate(45deg)}
+  #sayName{display:inline-block;font-size:9.5px;font-weight:700;color:#B24E30;background:#FFE7DE;
+    padding:2px 8px;border-radius:999px;margin-bottom:3px}
+  #sayText{font-size:13px;line-height:1.45}
+  #say.quiet #sayText{color:var(--ink-soft);font-size:12.5px}
+  #ctrl{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:7px}
+  .btn{border:0;border-radius:12px;padding:9px 4px;font-family:inherit;font-weight:700;font-size:12px;
+    background:#fff;color:var(--ink);cursor:pointer;box-shadow:0 3px 0 rgba(63,58,52,.14);transition:transform .1s,box-shadow .1s}
+  .btn:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(63,58,52,.14)}
+  .btn.primary{grid-column:span 3;background:var(--coral);color:#fff;box-shadow:0 3px 0 #D9603F;font-size:13.5px;padding:11px 4px}
+  .btn.primary:active{box-shadow:0 1px 0 #D9603F}
+  .btn.sky{background:var(--sky);color:#0C4E66;box-shadow:0 3px 0 #3EA6C9}
+  .btn.sky:active{box-shadow:0 1px 0 #3EA6C9}
+  .btn.plain{background:#F3EFE8;color:var(--ink-soft);box-shadow:0 3px 0 rgba(63,58,52,.10)}
+  .btn:disabled{opacity:.34;cursor:default;transform:none}
+  .btn:focus-visible{outline:3px solid var(--grape);outline-offset:2px}
+  #coin{position:absolute;left:50%;top:44%;transform:translateX(-50%);font-size:21px;font-weight:700;
+    color:#B27A18;text-shadow:0 2px 0 #fff;opacity:0;pointer-events:none}
+  #coin.go{animation:rise 1.5s ease-out}
+  @keyframes rise{0%{opacity:0;transform:translate(-50%,10px)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-50px)}}
+</style>
+</head>
+<body>
+<div id="phone">
+  <div id="stage"></div>
+  <div id="coin"></div>
+  <div id="ui">
+    <div id="topRow">
+      <div class="card" id="home">
+        <div id="stageName">ボロアパート</div>
+        <div id="chips">
+          <span class="chip" id="chipMoney">¥0</span>
+          <span class="chip b" id="chipDay">10日目</span>
+          <span class="chip c" id="chipHours">0時間</span>
+        </div>
+        <div id="bar"><div id="barFill"></div></div>
+        <div id="barNote">次の家まで あと ¥24,000</div>
+        <div id="logList"><span id="logEmpty">終えた分も、途中でやめた分も残ります。</span></div>
+      </div>
+      <div class="card" id="timer">
+        <svg id="ring" viewBox="0 0 40 40"><circle id="ringBg" cx="20" cy="20" r="16"/><circle id="ringFg" cx="20" cy="20" r="16" transform="rotate(-90 20 20)"/></svg>
+        <div id="tLeft">50:00</div>
+      </div>
+    </div>
+    <div class="card" id="rel">
+      <h3>関係</h3>
+      <div class="seg" id="relSeg">
+        <button data-lv="0" aria-pressed="false">初日</button>
+        <button data-lv="1" aria-pressed="true">10日</button>
+        <button data-lv="2" aria-pressed="false">30日</button>
+      </div>
+    </div>
+    <div class="spacer"></div>
+    <div class="card" id="say"><div><div id="sayName">おじさん</div><div id="sayText">お、来たな。今日どうする？</div></div></div>
+    <div id="ctrl">
+      <button class="btn primary" id="bStart">一緒に始める</button>
+      <button class="btn sky" id="bPhone" disabled>スマホを触る</button>
+      <button class="btn plain" id="bStop" disabled>やめる</button>
+      <button class="btn plain" id="bSkip">早送り</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+let state='IDLE', lv=1;
+let sTime=0, poseT=0;
+let headUp=0, nodT=-1, sitAmt=0, lieAmt=0;
+let money=0, totalMin=0, stageIdx=0;
+let decayT=0, decayLv=0;
+let act=null, actT=0, actDur=0;
+const SESSION_SEC=26, SESSION_MIN=50, YEN_PER_MIN=240;
+
+const SLACK=[
+  {at:6, line:'（あくびをした）'},
+  {at:13,line:'（頭をぽりぽり掻いている）'},
+  {at:21,line:'（スマホを触りはじめた）'},
+  {at:30,line:'（なぜか横に揺れて踊っている）'},
+  {at:40,line:'（座り込んでタバコに火をつけた）'},
+  {at:52,line:'（寝そべってポテチを食べている）'},
+  {at:66,line:'（……なんか、におう）'}
+];
+const ACTS=[
+  {n:'look',   d:3.4, line:'（あたりを見回している）'},
+  {n:'stretch',d:3.0, line:'（大きく伸びをした）'},
+  {n:'scratch',d:3.2, line:null},
+  {n:'ponder', d:3.6, line:'（腕を組んで考えこんでいる）'},
+  {n:'pocket', d:3.4, line:'（ポケットを探って、何も出てこなかった）'},
+  {n:'sneeze', d:2.4, line:'（くしゃみをした）'},
+  {n:'hum',    d:3.2, line:null}
+];
+const STAGES=[
+  {name:'ボロアパート', need:24000},
+  {name:'直したアパート', need:60000},
+  {name:'小さな一軒家', need:110000},
+  {name:'二階建ての家', need:180000},
+  {name:'庭付きの家', need:Infinity}
+];
+const C={
+  grass:0x74A551, dirt:0x7E7568, dirtDry:0x8C8474, soil:0xA98863,
+  cobble:0x9A9B96, cobbleD:0x82837E, cobbleGrime:0x6E6A61, puddle:0x4E5652,
+  leaf:0x4E8B43, leafD:0x3E7038, leafDead:0x7C6F4E, trunk:0x8A6444, trunkDead:0x6B5B48,
+  skin:0xE8BE96, skinD:0xD0A379, shirt:0xEDE7DA, pants:0x5E6E82,
+  wallOld:0x9B9082, roofOld:0x6E675C, rust:0x8A6B4E, woodOld:0x86735C,
+  wallNew:0xDFD2B6, roofNew:0xB0705A, roofTile:0x7E93A6, wood:0xB4906A,
+  glass:0x8FB6BE, glassLit:0xCFE6A0, hedge:0x4C8542, stoneW:0xBFB6A4,
+  trash:0x9A8E72, trashB:0x7E8C86
+};
+
+const phone=document.getElementById('phone');
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0xA9D3E2);
+scene.fog=new THREE.Fog(0xA9D3E2,34,64);
+let W=phone.clientWidth||400,H=phone.clientHeight||711;
+const FRUST=13;
+const camera=new THREE.OrthographicCamera(-FRUST*W/H/2,FRUST*W/H/2,FRUST/2,-FRUST/2,0.1,220);
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+document.getElementById('stage').appendChild(renderer.domElement);
+
+scene.add(new THREE.HemisphereLight(0xCFE2EC,0x6F8A56,0.58));
+const sun=new THREE.DirectionalLight(0xFFF2DC,0.62);
+sun.position.set(8,15,7); sun.castShadow=true; sun.shadow.mapSize.set(2048,2048);
+const sc=sun.shadow.camera; sc.left=-15;sc.right=15;sc.top=15;sc.bottom=-15;sc.near=1;sc.far=46;
+sun.shadow.bias=-0.0012; scene.add(sun);
+const fill=new THREE.DirectionalLight(0xBBD4E8,0.15); fill.position.set(-7,5,-6); scene.add(fill);
+const screenLight=new THREE.PointLight(0xC8E89A,0,2.4); scene.add(screenLight);
+
+// ポリゴン多め
+const mat=c=>new THREE.MeshLambertMaterial({color:c});
+function box(w,h,d,c){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d,2,2,2),mat(c));m.castShadow=true;m.receiveShadow=true;return m;}
+function cyl(rt,rb,h,c,s=28){const m=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,s,2),mat(c));m.castShadow=true;m.receiveShadow=true;return m;}
+function sph(r,c,s=30){const m=new THREE.Mesh(new THREE.SphereGeometry(r,s,Math.round(s*0.65)),mat(c));m.castShadow=true;m.receiveShadow=true;return m;}
+function cone(r,h,c,s=16){const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,s,2),mat(c));m.castShadow=true;m.receiveShadow=true;return m;}
+function put(p,m,x,y,z){m.position.set(x,y,z);p.add(m);return m;}
+const rnd=(a,b)=>a+Math.random()*(b-a);
+
+// ===== 地面 =====
+const world=new THREE.Group(); scene.add(world);
+const plot=cyl(13,12.6,0.9,C.dirt,72); plot.position.y=-0.45; plot.receiveShadow=true; world.add(plot);
+put(world,cyl(12.7,12.4,0.28,C.soil,72),0,-0.97,0);
+
+let envGroup=null;
+function buildEnv(idx){
+  const g=new THREE.Group();
+  const slum=idx===0;
+  plot.material.color.setHex(slum?C.dirt:(idx===1?C.dirtDry:C.grass));
+
+  if(slum){
+    for(let i=0;i<46;i++){
+      const a=Math.random()*6.28, r=Math.sqrt(Math.random())*9.5;
+      const cols=[C.cobble,C.cobbleD,C.cobbleGrime,C.dirtDry];
+      const t=box(rnd(0.8,1.5),0.09,rnd(0.7,1.2),cols[(Math.random()*cols.length)|0]);
+      t.position.set(Math.cos(a)*r,0.045+rnd(-0.015,0.015),Math.sin(a)*r);
+      t.rotation.y=Math.random()*3.14; t.rotation.z=rnd(-0.04,0.04);
+      t.castShadow=false; g.add(t);
+    }
+    for(let i=0;i<4;i++){
+      const a=Math.random()*6.28,r=rnd(2.5,8);
+      const p=cyl(rnd(0.6,1.1),rnd(0.6,1.1),0.03,C.puddle,20); p.castShadow=false;
+      put(g,p,Math.cos(a)*r,0.06,Math.sin(a)*r);
+    }
+    for(let i=0;i<10;i++){
+      const a=Math.random()*6.28,r=rnd(2.5,9);
+      const kind=(Math.random()*3)|0;
+      const m=kind===0?box(rnd(0.16,0.28),0.1,rnd(0.12,0.2),C.trash)
+            :kind===1?cyl(0.06,0.06,rnd(0.16,0.24),C.trashB,12)
+            :box(rnd(0.32,0.5),0.06,rnd(0.26,0.4),0x8B8577);
+      m.rotation.set(rnd(0,3),rnd(0,3),rnd(0,3));
+      put(g,m,Math.cos(a)*r,0.13,Math.sin(a)*r);
+    }
+    put(g,cyl(0.34,0.34,0.9,0x7A6A52,20),-3.8,0.45,1.0);
+    const drum=cyl(0.34,0.34,0.9,0x6E7A6A,20); drum.rotation.z=0.14; put(g,drum,4.3,0.45,0.1);
+    for(let i=-3;i<=3;i++){
+      if(Math.random()<0.35) continue;
+      const p=cyl(0.06,0.06,rnd(0.5,0.9),C.woodOld,10); p.rotation.z=rnd(-0.25,0.25);
+      put(g,p,i*1.0-0.4,0.35,5.8);
+    }
+    for(let i=0;i<14;i++){
+      const a=Math.random()*6.28,r=rnd(3,10);
+      put(g,cone(0.1,rnd(0.22,0.4),0x8A8058,6),Math.cos(a)*r,0.17,Math.sin(a)*r);
+    }
+  } else {
+    for(let i=0;i<9;i++){
+      const t=box(1.7,0.1,0.9,i%2?C.cobble:C.cobbleD); t.castShadow=false;
+      put(g,t,0,0.05,4.6-i*1.0);
+    }
+    if(idx>=2) for(let i=0;i<16;i++){
+      const a=Math.random()*6.28,r=rnd(4.8,10.5);
+      const x=Math.cos(a)*r,z=Math.sin(a)*r;
+      put(g,cyl(0.03,0.03,0.28,0x3E7038,8),x,0.14,z);
+      put(g,sph(0.1,[0xE8845E,0xF3D06A,0xE8A0BE,0xFFFFFF][i%4],14),x,0.32,z);
+    }
+    if(idx===1) for(let i=0;i<5;i++){
+      const a=Math.random()*6.28,r=rnd(3,8);
+      put(g,box(rnd(0.2,0.35),0.06,rnd(0.2,0.3),0x8B8577),Math.cos(a)*r,0.1,Math.sin(a)*r);
+    }
+  }
+
+  for(let i=0;i<12;i++){
+    const a=i/12*Math.PI*2+0.3, r=8.8+rnd(0,2.8), s=0.85+rnd(0,0.25);
+    const tg=new THREE.Group();
+    put(tg,cyl(0.15,0.2,0.8,slum?C.trunkDead:C.trunk,16),0,0.4,0);
+    if(slum){
+      for(let k=0;k<4;k++){
+        const br=cyl(0.05,0.05,rnd(0.5,0.9),C.trunkDead,10);
+        br.rotation.z=rnd(-1,1); br.rotation.x=rnd(-1,1);
+        put(tg,br,rnd(-0.2,0.2),rnd(0.95,1.4),rnd(-0.2,0.2));
+      }
+      put(tg,cone(0.5,0.7,C.leafDead,12),0,1.5,0);
+    } else {
+      put(tg,cone(0.95,1.15,C.leafD,18),0,1.15,0);
+      put(tg,cone(0.76,1.0,C.leaf,18),0,1.78,0);
+      put(tg,cone(0.53,0.88,C.leaf,18),0,2.38,0);
+    }
+    tg.position.set(Math.cos(a)*r,0,Math.sin(a)*r);
+    tg.scale.setScalar(s); tg.rotation.y=Math.random()*3; g.add(tg);
+  }
+  if(!slum) for(let i=0;i<10;i++){
+    const a=Math.random()*6.28,r=rnd(6.6,11.4);
+    const b=sph(0.42,C.leaf,20); b.scale.y=0.78; put(g,b,Math.cos(a)*r,0.3,Math.sin(a)*r);
+  }
+  return g;
+}
+function setEnv(idx){ if(envGroup) world.remove(envGroup); envGroup=buildEnv(idx); world.add(envGroup); }
+
+// ===== 家 =====
+let houseGroup=null; const pops=[];
+function buildHouse(idx){
+  const g=new THREE.Group(); g.position.set(0,0,-2.6);
+  if(idx===0){
+    put(g,box(3.0,2.0,2.2,C.wallOld),0,1.0,0);
+    put(g,box(3.3,0.18,2.5,C.roofOld),0,2.09,0);
+    put(g,box(0.55,0.95,0.08,C.woodOld),-0.75,0.48,1.13);
+    put(g,box(0.62,0.55,0.08,C.glass),0.72,1.25,1.13);
+    put(g,box(0.5,0.34,0.06,C.rust),1.1,0.5,1.12);
+    put(g,box(0.34,0.5,0.06,C.rust),-1.2,1.5,1.12);
+    put(g,box(0.28,0.42,0.05,C.rust),0.2,0.9,1.12);
+    for(let i=0;i<4;i++) put(g,box(0.8,0.1,0.42,C.woodOld),1.85,0.28+i*0.34,0.8-i*0.42);
+    put(g,cyl(0.05,0.05,1.5,C.rust,12),2.2,0.9,0.6);
+    const pole=cyl(0.04,0.04,1.9,0xB9B4A8,12); pole.rotation.z=Math.PI/2; put(g,pole,-0.2,1.55,1.35);
+    put(g,box(0.42,0.5,0.04,0xE4E0D4),-0.75,1.32,1.35);
+    put(g,box(0.36,0.44,0.04,0xC9CDBE),0.15,1.35,1.35);
+    const ant=cyl(0.035,0.035,1.2,0x6B655C,10); ant.rotation.z=0.22; put(g,ant,1.0,2.75,-0.4);
+    put(g,box(0.7,0.04,0.04,0x6B655C),1.15,3.28,-0.4);
+    for(let i=0;i<7;i++) put(g,cone(0.13,0.42,0x8A8058,6),rnd(-1.6,1.8),0.21,rnd(1.5,2.3));
+  }
+  if(idx===1){
+    put(g,box(3.0,2.0,2.2,C.wallNew),0,1.0,0);
+    put(g,box(3.3,0.2,2.5,C.roofNew),0,2.1,0);
+    put(g,box(0.55,0.95,0.08,C.wood),-0.75,0.48,1.13);
+    put(g,box(0.62,0.55,0.08,C.glass),0.72,1.25,1.13);
+    put(g,box(0.62,0.55,0.08,C.glass),-0.8,1.25,1.13);
+    for(let i=0;i<4;i++) put(g,box(0.8,0.1,0.42,C.wood),1.85,0.28+i*0.34,0.8-i*0.42);
+    put(g,cyl(0.16,0.19,0.26,0xC08A63,16),0.05,0.13,1.4);
+    put(g,sph(0.16,0xD86A6A,16),0.05,0.34,1.4);
+    put(g,cyl(0.035,0.035,1.2,0x6B655C,10),1.0,2.75,-0.4);
+    put(g,box(0.7,0.04,0.04,0x6B655C),1.0,3.3,-0.4);
+  }
+  if(idx===2){
+    put(g,box(3.2,1.7,2.6,C.wallNew),0,0.85,0);
+    const rf=cone(2.5,1.15,C.roofNew,4); rf.rotation.y=Math.PI/4; put(g,rf,0,2.27,0);
+    put(g,box(0.6,1.0,0.08,C.wood),0,0.5,1.33);
+    put(g,box(0.62,0.6,0.08,C.glass),-1.0,1.1,1.33);
+    put(g,box(0.62,0.6,0.08,C.glass),1.0,1.1,1.33);
+    put(g,box(3.5,0.12,0.6,C.roofNew),0,1.62,1.5);
+    for(let i=-2;i<=2;i++) put(g,cyl(0.06,0.06,0.6,C.wood,12),i*0.8,0.3,2.4);
+    put(g,box(3.4,0.06,0.06,C.wood),0,0.55,2.4);
+  }
+  if(idx===3){
+    put(g,box(3.2,1.7,2.6,C.wallNew),0,0.85,0);
+    put(g,box(2.9,1.5,2.4,C.wallNew),0,2.45,0);
+    const rf=cone(2.35,1.05,C.roofTile,4); rf.rotation.y=Math.PI/4; put(g,rf,0,3.72,0);
+    put(g,box(0.6,1.0,0.08,C.wood),0,0.5,1.33);
+    put(g,box(0.62,0.6,0.08,C.glass),-1.0,1.1,1.33);
+    put(g,box(0.62,0.6,0.08,C.glass),1.0,1.1,1.33);
+    put(g,box(0.9,0.7,0.08,C.glass),0,2.6,1.23);
+    put(g,box(2.2,0.12,0.7,C.wood),0,2.1,1.5);
+    for(let i=-2;i<=2;i++) put(g,cyl(0.05,0.05,0.5,C.wood,12),i*0.5,2.35,1.78);
+    put(g,box(2.3,0.06,0.06,C.wood),0,2.6,1.78);
+    put(g,box(0.42,0.9,0.42,C.stoneW),1.15,3.6,-0.5);
+    for(let i=-2;i<=2;i++) put(g,cyl(0.06,0.06,0.6,C.wood,12),i*0.85,0.3,2.5);
+    put(g,box(3.5,0.06,0.06,C.wood),0,0.55,2.5);
+  }
+  if(idx===4){
+    put(g,box(3.6,1.8,2.8,C.wallNew),0,0.9,0);
+    put(g,box(3.2,1.6,2.6,C.wallNew),0,2.6,0);
+    const rf=cone(2.6,1.15,C.roofTile,4); rf.rotation.y=Math.PI/4; put(g,rf,0,3.98,0);
+    put(g,box(1.9,1.5,1.9,C.wallNew),-2.6,0.75,0.4);
+    const rf2=cone(1.6,0.8,C.roofTile,4); rf2.rotation.y=Math.PI/4; put(g,rf2,-2.6,1.9,0.4);
+    put(g,box(0.66,1.05,0.08,C.wood),0,0.52,1.43);
+    put(g,box(0.66,0.62,0.08,C.glass),-1.1,1.2,1.43);
+    put(g,box(0.66,0.62,0.08,C.glass),1.1,1.2,1.43);
+    put(g,box(1.0,0.75,0.08,C.glass),0,2.75,1.33);
+    put(g,box(2.4,0.12,0.75,C.wood),0,2.25,1.6);
+    for(let i=-2;i<=2;i++) put(g,cyl(0.05,0.05,0.5,C.wood,12),i*0.55,2.5,1.9);
+    put(g,box(2.5,0.06,0.06,C.wood),0,2.75,1.9);
+    put(g,box(0.46,1.0,0.46,C.stoneW),1.3,3.9,-0.5);
+    for(let i=-3;i<=3;i++){ if(Math.abs(i)<1)continue; put(g,box(0.85,0.6,0.5,C.hedge),i*0.95,0.3,3.2); }
+    put(g,cyl(0.09,0.09,1.2,C.stoneW,14),-0.9,0.6,3.2);
+    put(g,cyl(0.09,0.09,1.2,C.stoneW,14),0.9,0.6,3.2);
+    put(g,box(2.1,0.14,0.14,C.stoneW),0,1.25,3.2);
+    put(g,cyl(0.14,0.14,0.9,C.wood,14),2.2,0.45,3.1);
+    put(g,box(0.34,0.24,0.24,0xC5654C),2.2,1.0,3.1);
+  }
+  return g;
+}
+function setHouse(idx,animate){
+  if(houseGroup) world.remove(houseGroup);
+  houseGroup=buildHouse(idx); world.add(houseGroup); setEnv(idx);
+  if(animate){houseGroup.scale.set(0.01,0.01,0.01);pops.push({o:houseGroup,t:0});}
+}
+setHouse(0,false);
+
+// ===== ちゃぶ台（体と干渉しない位置に）=====
+const desk=new THREE.Group(); desk.position.set(0,0,2.48); world.add(desk);
+put(desk,box(1.3,0.06,0.55,C.wood),0,0.40,0);
+[[-0.54,-0.19],[0.54,-0.19],[-0.54,0.19],[0.54,0.19]].forEach(p=>put(desk,box(0.07,0.38,0.07,C.woodOld),p[0],0.2,p[1]));
+// ノートパソコンは斜めに置いて、蓋が手前をふさがないようにする
+const laptop=new THREE.Group(); laptop.position.set(0.26,0.43,0.0); laptop.rotation.y=-0.42; desk.add(laptop);
+put(laptop,box(0.56,0.025,0.34,0x8E949A),0,0,0);
+const lidPivot=new THREE.Group(); lidPivot.position.set(0,0.01,0.16); laptop.add(lidPivot);
+put(lidPivot,box(0.56,0.30,0.02,0x8E949A),0,0.15,0);
+const screen=box(0.49,0.24,0.012,C.glass); put(lidPivot,screen,0,0.15,-0.016);
+lidPivot.rotation.x=0.42;
+put(desk,cyl(0.09,0.1,0.18,0xE0DCD0,20),-0.5,0.49,0.05);
+put(desk,box(0.66,0.09,0.6,0xC98C6E),0,0.05,-0.75);
+
+// ===== おじさん =====
+const man=new THREE.Group(); world.add(man);
+const bodyPivot=new THREE.Group(); man.add(bodyPivot);
+const headPivot=new THREE.Group(); headPivot.position.y=0.86; bodyPivot.add(headPivot);
+
+const belly=sph(0.44,C.shirt,34); belly.scale.set(1.05,0.92,0.88); put(bodyPivot,belly,0,0.62,0);
+const bellyLow=sph(0.42,C.shirt,30); bellyLow.scale.set(1.0,0.72,0.9); put(bodyPivot,bellyLow,0,0.42,0.04);
+put(bodyPivot,cyl(0.4,0.38,0.2,C.pants,30),0,0.24,0);
+put(bodyPivot,box(0.66,0.06,0.5,0x4A566A),0,0.33,0);
+const head=sph(0.36,C.skin,34); head.scale.set(1,0.95,0.96); put(headPivot,head,0,0.26,0);
+const shine=sph(0.31,0xF2CDA6,26); shine.scale.set(0.9,0.6,0.85); put(headPivot,shine,0,0.36,0.02);
+const hairL=sph(0.19,0x6B5B4E,20); hairL.scale.set(0.55,0.75,0.95); put(headPivot,hairL,-0.31,0.2,0);
+const hairR=sph(0.19,0x6B5B4E,20); hairR.scale.set(0.55,0.75,0.95); put(headPivot,hairR,0.31,0.2,0);
+const hairB=sph(0.2,0x6B5B4E,20); hairB.scale.set(0.85,0.5,0.5); put(headPivot,hairB,0,0.16,-0.26);
+const earL=sph(0.09,C.skinD,16); earL.scale.set(0.5,1,0.8); put(headPivot,earL,-0.35,0.24,0);
+const earR=sph(0.09,C.skinD,16); earR.scale.set(0.5,1,0.8); put(headPivot,earR,0.35,0.24,0);
+put(headPivot,sph(0.05,0x3A322B,14),-0.13,0.29,0.31);
+put(headPivot,sph(0.05,0x3A322B,14),0.13,0.29,0.31);
+put(headPivot,sph(0.07,C.skinD,16),0,0.21,0.35);
+const stub=sph(0.3,0xBFA089,24); stub.scale.set(0.95,0.42,0.7); put(headPivot,stub,0,0.08,0.12);
+put(headPivot,box(0.16,0.035,0.03,0x5A4B3F),-0.11,0.38,0.32);
+put(headPivot,box(0.16,0.035,0.03,0x5A4B3F),0.11,0.38,0.32);
+const mouth=box(0.15,0.025,0.02,0x6B4A42); put(headPivot,mouth,0,0.09,0.35);
+
+function arm(sx){
+  const up=new THREE.Group(); up.position.set(sx*0.42,0.74,0); bodyPivot.add(up);
+  put(up,cyl(0.095,0.085,0.30,C.skin,20),0,-0.15,0);
+  put(up,sph(0.095,C.skin,18),0,-0.30,0);
+  const fore=new THREE.Group(); fore.position.y=-0.30; up.add(fore);
+  put(fore,cyl(0.082,0.075,0.26,C.skin,20),0,-0.13,0);
+  put(fore,sph(0.098,C.skin,20),0,-0.28,0);
+  for(let i=-1;i<=1;i++) put(fore,box(0.032,0.06,0.1,C.skin),i*0.048,-0.33,0.05);
+  return {up,fore};
+}
+const aL=arm(-1), aR=arm(1);
+function leg(sx){
+  const up=new THREE.Group(); up.position.set(sx*0.19,0.24,0); bodyPivot.add(up);
+  put(up,cyl(0.115,0.1,0.22,C.skin,20),0,-0.11,0);
+  const sh=new THREE.Group(); sh.position.y=-0.22; up.add(sh);
+  put(sh,cyl(0.095,0.088,0.2,C.skin,20),0,-0.1,0);
+  put(sh,box(0.17,0.07,0.28,0x6B5B4E),0,-0.21,0.05);
+  return {up,sh};
+}
+const lL=leg(-1), lR=leg(1);
+
+const cig=new THREE.Group(); headPivot.add(cig); cig.visible=false;
+const cs=cyl(0.018,0.018,0.16,0xF2EDE2,12); cs.rotation.z=Math.PI/2; put(cig,cs,0.13,0.11,0.33);
+put(cig,sph(0.024,0xE06A3A,12),0.21,0.11,0.35);
+const smoke=[];
+for(let i=0;i<7;i++){
+  const m=new THREE.Mesh(new THREE.SphereGeometry(0.07,14,10),new THREE.MeshLambertMaterial({color:0xE8E4DA,transparent:true,opacity:0}));
+  m.castShadow=false; headPivot.add(m); smoke.push({m,t:i/7});
+}
+const phoneProp=new THREE.Group(); aL.fore.add(phoneProp); phoneProp.visible=false;
+put(phoneProp,box(0.13,0.22,0.02,0x3A342C),0,-0.34,0.1);
+const phoneScr=box(0.11,0.19,0.01,0xBFE3F2); put(phoneProp,phoneScr,0,-0.34,0.115);
+const chips=new THREE.Group(); bodyPivot.add(chips); chips.visible=false;
+const bag=box(0.24,0.34,0.14,0xE0B04A); bag.rotation.z=0.3; put(chips,bag,0.55,0.18,0.32);
+const stink=[],flies=[];
+for(let i=0;i<5;i++){
+  const m=new THREE.Mesh(new THREE.SphereGeometry(0.12,14,10),new THREE.MeshLambertMaterial({color:0xA8C46A,transparent:true,opacity:0}));
+  m.castShadow=false; bodyPivot.add(m); stink.push({m,t:i/5,x:rnd(-0.35,0.35),z:rnd(-0.25,0.25)});
+}
+for(let i=0;i<3;i++){
+  const m=new THREE.Mesh(new THREE.SphereGeometry(0.035,10,8),new THREE.MeshLambertMaterial({color:0x3A342C,transparent:true,opacity:0}));
+  m.castShadow=false; bodyPivot.add(m); flies.push({m,p:i*2.1,r:0.55+i*0.16,y:0.95+i*0.18});
+}
+
+man.position.set(2.6,0,3.2);
+man.scale.setScalar(1.25);
+const SIT_POS=new THREE.Vector3(0,0,1.60);
+let wp=new THREE.Vector3(2.6,0,3.2), waitT=1.2, walking=false, yawTarget=0;
+function newWaypoint(){
+  const a=Math.random()*Math.PI*2, r=1.8+Math.random()*3.2;
+  wp.set(Math.cos(a)*r,0,2.8+Math.sin(a)*r*0.6);
+}
+function pickAct(){
+  const A=ACTS[(Math.random()*ACTS.length)|0];
+  act=A.n; actT=0; actDur=A.d;
+  if(A.line&&Math.random()<0.45) sayRaw(A.line);
+}
+
+// ===== カメラ =====
+let az=Math.PI*0.5, el=0.60, dist=26, zoom=1;
+function updCam(){
+  camera.position.set(Math.cos(az)*Math.cos(el)*dist,Math.sin(el)*dist,Math.sin(az)*Math.cos(el)*dist);
+  camera.lookAt(0,1.0,0.9);
+  const f=FRUST/zoom;
+  camera.left=-f*W/H/2;camera.right=f*W/H/2;camera.top=f/2;camera.bottom=-f/2;
+  camera.updateProjectionMatrix();
+}
+function resize(){W=phone.clientWidth;H=phone.clientHeight;renderer.setSize(W,H);updCam();}
+addEventListener('resize',resize); resize();
+const pts=new Map(); let pinch0=0,zoom0=1;
+const cv=renderer.domElement;
+cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===2){const a=[...pts.values()];pinch0=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);zoom0=zoom;}});
+cv.addEventListener('pointermove',e=>{
+  const p=pts.get(e.pointerId); if(!p) return;
+  if(pts.size===1){az-=(e.clientX-p.x)*0.008;el=Math.max(0.28,Math.min(1.05,el+(e.clientY-p.y)*0.005));updCam();}
+  p.x=e.clientX;p.y=e.clientY;
+  if(pts.size===2){const a=[...pts.values()];const d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);
+    if(pinch0>0){zoom=Math.max(0.65,Math.min(2.4,zoom0*d/pinch0));updCam();}}
+});
+function up(e){pts.delete(e.pointerId);if(pts.size<2)pinch0=0;}
+cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up);
+cv.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.max(0.65,Math.min(2.4,zoom*(e.deltaY>0?0.94:1.06)));updCam();},{passive:false});
+
+// ===== 発話 =====
+const LINES={
+  0:{name:'おじさん',idle:'…えっ、見てるん？　まあ、ええけど。',
+     start:'50分な。ちゃんとやるって。パソコン開くわ。',
+     nudge:'（手が止まった）',back:'（また画面に向かった）',
+     done:'50分できた。1万2千円。……ちょっとええ気分やわ。',
+     stop:'まあ、やった分はもらえるし。ええよ。'},
+  1:{name:'おじさん',idle:'お、来たな。今日どうする？',start:'よっしゃ、やるか。',
+     nudge:'（手が止まった）',back:'（うなずいて、画面に戻った）',
+     done:'50分。今週これで4回目やで。',stop:'今日はここまでにしとこか。'},
+  2:{name:'おじさん',idle:'昨日、遅かったやろ。',start:'今日は短めでええんちゃう。合わせるわ。',
+     nudge:'（手が止まった）',back:'（画面に戻った）',
+     done:'うん。おつかれ。',stop:'ええよ。'}
+};
+const DAYS=['1日目','10日目','30日目'];
+const sayBox=document.getElementById('say'),sayText=document.getElementById('sayText'),sayName=document.getElementById('sayName');
+function say(k){const L=LINES[lv];sayName.textContent=L.name;sayText.textContent=L[k];
+  sayBox.classList.toggle('quiet',k==='nudge'||k==='back');}
+function sayRaw(t){sayName.textContent=LINES[lv].name;sayText.textContent=t;sayBox.classList.add('quiet');}
+function setLv(n){
+  lv=n;
+  document.querySelectorAll('#relSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.lv===String(n)));
+  document.getElementById('chipDay').textContent=DAYS[n];
+  if(state==='IDLE'&&decayLv===0) say('idle');
+}
+document.getElementById('relSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setLv(+b.dataset.lv);});
+
+// ===== HUD =====
+const chipMoney=document.getElementById('chipMoney'),chipHours=document.getElementById('chipHours'),
+      stageName=document.getElementById('stageName'),barFill=document.getElementById('barFill'),
+      barNote=document.getElementById('barNote'),coin=document.getElementById('coin');
+const yen=n=>'¥'+Math.round(n).toLocaleString('ja-JP');
+function updHUD(){
+  chipMoney.textContent=yen(money);
+  chipHours.textContent=(totalMin/60).toFixed(1)+'時間';
+  stageName.textContent=STAGES[stageIdx].name;
+  const need=STAGES[stageIdx].need;
+  if(need===Infinity){barFill.style.width='100%';barNote.textContent='これ以上は望まん';}
+  else{const prev=stageIdx===0?0:STAGES[stageIdx-1].need;
+    barFill.style.width=Math.min(100,(money-prev)/(need-prev)*100)+'%';
+    barNote.textContent='次の家まで あと '+yen(need-money);}
+}
+function popCoin(n){coin.textContent='+'+yen(n);coin.classList.remove('go');void coin.offsetWidth;coin.classList.add('go');}
+function addMoney(min){
+  money+=min*YEN_PER_MIN; totalMin+=min; popCoin(min*YEN_PER_MIN);
+  while(stageIdx<STAGES.length-1&&money>=STAGES[stageIdx].need){stageIdx++;setHouse(stageIdx,true);}
+  updHUD();
+}
+
+// ===== 状態機械 =====
+const bStart=document.getElementById('bStart'),bPhone=document.getElementById('bPhone'),
+      bStop=document.getElementById('bStop'),bSkip=document.getElementById('bSkip');
+const timerEl=document.getElementById('timer'),ringFg=document.getElementById('ringFg'),tLeft=document.getElementById('tLeft');
+const RC=2*Math.PI*16; ringFg.style.strokeDasharray=RC;
+function setButtons(){
+  const busy=(state==='FOCUS'||state==='NUDGE');
+  bStart.disabled=busy;bPhone.disabled=!busy;bStop.disabled=!busy;bSkip.disabled=busy;
+  bStart.textContent=busy?'作業中':'一緒に始める';
+  bPhone.textContent=(state==='NUDGE')?'作業に戻る':'スマホを触る';
+  timerEl.classList.toggle('on',busy);
+  timerEl.classList.toggle('pause',state==='NUDGE');
+}
+function resetDecay(){decayT=0;decayLv=0;cig.visible=false;phoneProp.visible=false;chips.visible=false;}
+function setState(s){
+  state=s;setButtons();act=null;
+  if(s==='FOCUS'){wp.copy(SIT_POS);waitT=0;resetDecay();}
+  if(s==='NUDGE'){resetDecay();}
+  if(s==='IDLE'){waitT=1.0;newWaypoint();resetDecay();}
+}
+function startSession(){sTime=0;setState('FOCUS');say('start');}
+function endSession(ok){
+  const min=ok?SESSION_MIN:Math.max(1,Math.round(sTime/SESSION_SEC*SESSION_MIN));
+  addMoney(min); addLog(min,ok);
+  setState('IDLE'); say(ok?'done':'stop');
+  if(ok) nodT=0; else headUp=-0.32;
+}
+bStart.onclick=()=>{if(state==='IDLE')startSession();};
+bStop.onclick=()=>{if(state==='FOCUS'||state==='NUDGE')endSession(false);};
+bPhone.onclick=()=>{
+  if(state==='FOCUS'){setState('NUDGE');say('nudge');}
+  else if(state==='NUDGE'){setState('FOCUS');say('back');}
+};
+bSkip.onclick=()=>{if(state==='IDLE'){addMoney(SESSION_MIN);addLog(SESSION_MIN,true);resetDecay();}};
+
+const logList=document.getElementById('logList'); let recN=0;
+function addLog(min,ok){
+  if(recN===0)logList.innerHTML='';
+  recN++;
+  const d=document.createElement('span');
+  d.className='rec '+(ok?'ok':'ng');
+  d.textContent=min+'分 '+(ok?'完了':'中断');
+  logList.prepend(d);
+  while(logList.children.length>7) logList.removeChild(logList.lastChild);
+}
+
+// ===== ループ =====
+setLv(1); setButtons(); say('idle'); updHUD();
+const clock=new THREE.Clock();
+function tick(){
+  const dt=Math.min(0.05,clock.getDelta()), t=clock.elapsedTime;
+  poseT+=dt;
+
+  if(state==='FOCUS'){
+    sTime+=dt;
+    const p=Math.min(1,sTime/SESSION_SEC);
+    ringFg.style.strokeDashoffset=RC*(1-p);
+    const rem=Math.max(0,SESSION_MIN*60*(1-p));
+    tLeft.textContent=String(Math.floor(rem/60)).padStart(2,'0')+':'+String(Math.floor(rem%60)).padStart(2,'0');
+    if(p>=1) endSession(true);
+  }
+  if(state==='IDLE'||state==='NUDGE'){
+    decayT+=dt*(state==='NUDGE'?4:1);
+    for(let i=SLACK.length-1;i>=0;i--){
+      if(decayT>=SLACK[i].at&&decayLv<i+1){decayLv=i+1;sayRaw(SLACK[i].line);act=null;break;}
+    }
+  }
+  cig.visible=decayLv===5;
+  phoneProp.visible=decayLv===3;
+  chips.visible=decayLv>=6;
+
+  const dx=wp.x-man.position.x, dz=wp.z-man.position.z, d2=Math.hypot(dx,dz);
+  if(decayLv>=1) waitT=99;
+  if(waitT>0){
+    waitT-=dt; walking=false;
+    if(act){ actT+=dt; if(actT>actDur) act=null; }
+  } else if(d2>0.18){
+    walking=true; act=null;
+    const sp=(state==='IDLE')?0.85:1.5;
+    man.position.x+=dx/d2*Math.min(d2,sp*dt);
+    man.position.z+=dz/d2*Math.min(d2,sp*dt);
+    yawTarget=Math.atan2(dx,dz);
+  } else {
+    walking=false;
+    if(state==='IDLE'&&decayLv===0){waitT=3.0+Math.random()*3.0;newWaypoint();pickAct();}
+  }
+
+  const atDesk=(state==='FOCUS')&&!walking&&d2<=0.3&&decayLv===0;
+  sitAmt+=(((atDesk||decayLv===5)?1:0)-sitAmt)*Math.min(1,dt*4);
+  lieAmt+=(((decayLv>=6)?1:0)-lieAmt)*Math.min(1,dt*2.5);
+  if(atDesk||decayLv>=1) yawTarget=0;
+  let dy=yawTarget-man.rotation.y;
+  while(dy>Math.PI)dy-=Math.PI*2; while(dy<-Math.PI)dy+=Math.PI*2;
+  man.rotation.y+=dy*Math.min(1,dt*5);
+
+  const step=Math.sin(poseT*4.6);
+  let bz=walking?step*0.10:0;
+  let by=walking?Math.abs(step)*0.05:Math.sin(poseT*1.4)*0.015;
+  let lean=0;
+  let hx=headUp, hy=Math.sin(t*0.4)*0.09;
+  let Lx=walking?step*0.30:0.02, Rx=walking?-step*0.30:0.02;
+  let Lz=0.26, Rz=-0.26, Lf=-0.25, Rf=-0.25, k=6;
+  mouth.scale.set(1,1,1);
+
+  if(atDesk&&state==='FOCUS'){
+    const tap=Math.sin(poseT*13)*0.10, tap2=Math.sin(poseT*13+1.9)*0.10;
+    Lx=-1.05+tap; Rx=-1.05+tap2; Lz=0.34; Rz=-0.30; Lf=-0.5; Rf=-0.5;
+    lean=0.26; hx=0.22; hy=-0.12;
+  } else if(decayLv===1){
+    const c=poseT%4.2;
+    if(c<1.3){const e=Math.sin(c/1.3*Math.PI);
+      hx=-0.5*e; Rx=-2.3*e; Rz=-0.5-0.5*e; Rf=-0.6*e; Lx=-1.5*e; Lz=0.4+0.4*e; Lf=-0.5*e;
+      mouth.scale.set(1,1+e*7,1+e*4);}
+    k=5;
+  } else if(decayLv===2){
+    Rx=-2.4; Rz=-0.7; Rf=-1.5+Math.sin(poseT*13)*0.16; Lx=0.05; hx=0.12; bz=Math.sin(poseT*2)*0.03; k=8;
+  } else if(decayLv===3){
+    Lx=-1.15; Lz=0.5; Lf=-0.9; Rx=-1.05; Rz=-0.45; Rf=-0.95; hx=0.42; hy=Math.sin(t*0.6)*0.04;
+    phoneScr.material.color.setHSL(0.55,0.5,0.68+Math.sin(t*7)*0.05);
+  } else if(decayLv===4){
+    const s2=Math.sin(poseT*3.4);
+    bz=s2*0.26; by=Math.abs(s2)*0.09; hy=s2*0.3;
+    Lx=-1.7+s2*0.35; Rx=-1.7-s2*0.35; Lz=0.8; Rz=-0.8; Lf=-1.1; Rf=-1.1; hx=-0.1;
+  } else if(decayLv===5){
+    const c=poseT%5.5, toM=c<1.1?Math.sin(c/1.1*Math.PI):0;
+    Rx=-0.5-0.5*toM; Rz=-0.3-0.2*toM; Rf=-0.7-1.1*toM; Lx=-0.15; Lz=0.5; Lf=-0.5; hx=0.05; k=5;
+  } else if(decayLv>=6){
+    const c=poseT%2.4, eat=c<1.0?Math.sin(c/1.0*Math.PI):0;
+    Lx=-0.5; Lz=0.65; Lf=-0.8; Rx=-0.4-0.7*eat; Rz=-0.5; Rf=-0.6-1.3*eat; hx=0.1;
+    mouth.scale.set(1,1+eat*4,1+eat*2); k=6;
+  } else if(state==='NUDGE'){
+    Lx=-0.5; Rx=-0.5; Lf=-0.3; Rf=-0.3; hx=-0.1;
+  } else if(act){
+    const u=actT/actDur, e=Math.sin(u*Math.PI);
+    if(act==='look'){ hy=Math.sin(actT*1.7)*0.6; hx=-0.05; }
+    else if(act==='stretch'){ Lx=-2.5*e; Rx=-2.5*e; Lz=0.35+0.3*e; Rz=-0.35-0.3*e; Lf=-0.2; Rf=-0.2;
+      hx=-0.32*e; lean=-0.16*e; by+=0.05*e; }
+    else if(act==='scratch'){ Rx=-0.4; Rz=-0.1; Rf=-1.45+Math.sin(actT*11)*0.14; hx=0.16; }
+    else if(act==='ponder'){ Lx=-0.95; Lz=0.75; Lf=-1.5; Rx=-0.95; Rz=-0.75; Rf=-1.5;
+      hx=0.2; hy=Math.sin(actT*0.8)*0.18; }
+    else if(act==='pocket'){ const late=u>0.7;
+      if(late){ Lx=-0.5; Rx=-0.5; Lz=0.85; Rz=-0.85; Lf=-0.3; Rf=-0.3; hx=-0.12; }
+      else { Rx=-0.15; Rf=-0.75+Math.sin(actT*9)*0.18; Lx=-0.1; Lf=-0.7; hx=0.22; } }
+    else if(act==='sneeze'){ const s3=Math.max(0,Math.sin((u-0.35)*Math.PI/0.3));
+      hx=(u<0.35? -0.35*(u/0.35) : 0.5*s3);
+      Rx=-1.9*(u<0.5?1:1-s3); Rz=-0.35; Rf=-1.35; bz=0; by+=0.03*s3; }
+    else if(act==='hum'){ bz=Math.sin(actT*2.6)*0.09; hy=Math.sin(actT*2.6)*0.22; by+=Math.abs(Math.sin(actT*2.6))*0.02; }
+  }
+
+  bodyPivot.rotation.z+=(bz-bodyPivot.rotation.z)*Math.min(1,dt*8);
+  bodyPivot.rotation.x+=((lean-lieAmt*1.45)-bodyPivot.rotation.x)*Math.min(1,dt*5);
+  bodyPivot.position.y=by-sitAmt*0.30+lieAmt*0.62;
+  bodyPivot.position.z=lieAmt*0.55;
+
+  const legBase=walking?step*0.5:0, legSit=sitAmt*(-1.3)+lieAmt*1.25;
+  lL.up.rotation.x+=((legBase+legSit)-lL.up.rotation.x)*Math.min(1,dt*9);
+  lR.up.rotation.x+=((-legBase+legSit)-lR.up.rotation.x)*Math.min(1,dt*9);
+  const kneeT=walking?Math.max(0,-step)*0.5:sitAmt*0.9;
+  lL.sh.rotation.x+=(kneeT-lL.sh.rotation.x)*Math.min(1,dt*9);
+  lR.sh.rotation.x+=(Math.max(0,step)*0.5*(walking?1:0)+(walking?0:sitAmt*0.9)-lR.sh.rotation.x)*Math.min(1,dt*9);
+
+  aL.up.rotation.x+=(Lx-aL.up.rotation.x)*Math.min(1,dt*k);
+  aR.up.rotation.x+=(Rx-aR.up.rotation.x)*Math.min(1,dt*k);
+  aL.up.rotation.z+=(Lz-aL.up.rotation.z)*Math.min(1,dt*k);
+  aR.up.rotation.z+=(Rz-aR.up.rotation.z)*Math.min(1,dt*k);
+  aL.fore.rotation.x+=(Lf-aL.fore.rotation.x)*Math.min(1,dt*k);
+  aR.fore.rotation.x+=(Rf-aR.fore.rotation.x)*Math.min(1,dt*k);
+
+  if(nodT>=0){nodT+=dt;hx=Math.sin(nodT*7)*0.26;if(nodT>1.8)nodT=-1;}
+  headPivot.rotation.x+=(hx-headPivot.rotation.x)*Math.min(1,dt*6);
+  headPivot.rotation.y+=(hy-headPivot.rotation.y)*Math.min(1,dt*6);
+
+  const lit=(state==='FOCUS'&&atDesk);
+  screen.material.color.setHex(lit?C.glassLit:C.glass);
+  screenLight.position.set(man.position.x+0.2,0.62,man.position.z+0.55);
+  screenLight.intensity+=((lit?0.8+Math.sin(t*9)*0.05:0)-screenLight.intensity)*Math.min(1,dt*6);
+
+  smoke.forEach(s=>{
+    if(!cig.visible){s.m.material.opacity=0;return;}
+    s.t+=dt*0.42; if(s.t>1)s.t-=1;
+    s.m.position.set(0.22+s.t*0.16,0.14+s.t*0.85,0.36-s.t*0.1);
+    s.m.scale.setScalar(0.5+s.t*1.5);
+    s.m.material.opacity=Math.max(0,0.42*(1-s.t)*(s.t<0.12?s.t/0.12:1));
+  });
+  const stinkOn=decayLv>=7;
+  stink.forEach(s=>{
+    if(!stinkOn){s.m.material.opacity=Math.max(0,s.m.material.opacity-dt);return;}
+    s.t+=dt*0.35; if(s.t>1)s.t-=1;
+    s.m.position.set(s.x,0.7+s.t*1.3,s.z);
+    s.m.scale.setScalar(0.6+s.t*1.1);
+    s.m.material.opacity=0.35*Math.sin(s.t*Math.PI);
+  });
+  flies.forEach(f=>{
+    f.p+=dt*(2.4+f.r);
+    f.m.position.set(Math.cos(f.p)*f.r,f.y+Math.sin(f.p*3)*0.12,Math.sin(f.p)*f.r*0.7);
+    f.m.material.opacity+=((stinkOn?1:0)-f.m.material.opacity)*Math.min(1,dt*3);
+  });
+
+  for(let i=pops.length-1;i>=0;i--){
+    const p=pops[i]; p.t+=dt;
+    const kk=Math.min(1,p.t/0.8);
+    const s=(1-Math.pow(1-kk,3))+Math.sin(kk*Math.PI)*0.1;
+    p.o.scale.set(s,s,s);
+    if(kk>=1){p.o.scale.set(1,1,1);pops.splice(i,1);}
+  }
+
+  renderer.render(scene,camera);
+  requestAnimationFrame(tick);
+}
+tick();
+</script>
+</body>
+</html>

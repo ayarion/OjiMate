@@ -597,14 +597,16 @@ const sweatDrops=SWEAT_SPOTS.map(spot=>{
 });
 
 function arm(sx){
-  const up=new THREE.Group(); up.position.set(sx*0.44,0.78,0.04); bodyPivot.add(up);
-  put(up,sph(0.115,C.skin,28),0,0,0); // 肩：円柱の断面を隠し、胴となだらかに繋ぐ
+  // 肩はお腹の球の外側にはっきり出す（球だけ胴に食い込ませて繋ぎ、円柱本体は胴に触れない位置に）
+  const up=new THREE.Group(); up.position.set(sx*0.58,0.80,0.05); bodyPivot.add(up);
+  put(up,sph(0.15,C.skin,28),0,0,0); // 肩：円柱の断面を隠し、胴となだらかに繋ぐ
   put(up,cyl(0.095,0.085,0.30,C.skin,32),0,-0.15,0);
   put(up,sph(0.095,C.skin,32),0,-0.30,0);
   const fore=new THREE.Group(); fore.position.y=-0.30; up.add(fore);
   put(fore,cyl(0.082,0.075,0.26,C.skin,32),0,-0.13,0);
   put(fore,sph(0.098,C.skin,32),0,-0.28,0);
-  for(let i=-1;i<=1;i++) put(fore,box(0.032,0.06,0.1,C.skin),i*0.048,-0.33,0.05);
+  // 指：腕の向きに関わらず「手のひらの延長」になるよう、前腕と同じY軸方向に伸ばす
+  for(let i=-1;i<=1;i++) put(fore,box(0.032,0.12,0.045,C.skin),i*0.045,-0.40,0.01);
   return {up,fore};
 }
 const aL=arm(-1), aR=arm(1);
@@ -826,7 +828,7 @@ function addMoney(min){
 }
 
 // ===== 音（コードで合成。外部音源は使わない） =====
-let audioCtx=null, master=null, droneOsc=[], windGainNode=null;
+let audioCtx=null, master=null, droneOsc=[], windGainNode=null, guitarGain=null;
 function ensureAudio(){
   if(audioCtx) return;
   audioCtx=new (window.AudioContext||window.webkitAudioContext)();
@@ -837,23 +839,64 @@ function ensureAudio(){
   for(let i=0;i<bufSize;i++) data[i]=Math.random()*2-1;
   const noise=audioCtx.createBufferSource(); noise.buffer=buf; noise.loop=true;
   const windFilter=audioCtx.createBiquadFilter(); windFilter.type='bandpass'; windFilter.frequency.value=420; windFilter.Q.value=0.5;
-  windGainNode=audioCtx.createGain(); windGainNode.gain.value=0.05;
+  windGainNode=audioCtx.createGain(); windGainNode.gain.value=0.03;
   noise.connect(windFilter).connect(windGainNode).connect(master); noise.start();
   [55,82.5].forEach((f,i)=>{
     const o=audioCtx.createOscillator(); o.type='sine'; o.frequency.value=f;
-    const g=audioCtx.createGain(); g.gain.value=i===0?0.05:0.02;
+    const g=audioCtx.createGain(); g.gain.value=i===0?0.03:0.012;
     o.connect(g).connect(master); o.start(); droneOsc.push(o);
   });
+  guitarGain=audioCtx.createGain(); guitarGain.gain.value=1; guitarGain.connect(master);
+}
+
+// カフェ風の指弾きアコースティックギター（コード進行を爪弾くループ、外部音源なし）
+const GUITAR_CHORDS=[
+  [261.63,329.63,392.00,493.88], // Cmaj7: C4 E4 G4 B4
+  [220.00,261.63,329.63,392.00], // Am7:   A3 C4 E4 G4
+  [174.61,220.00,261.63,329.63], // Fmaj7: F3 A3 C4 E4
+  [196.00,246.94,293.66,349.23], // Gadd9-ish: G3 B3 D4 F4
+];
+const PICK_PATTERN=[0,2,1,3,2,1];
+const NOTE_GAP=0.44;
+let guitarStep=0, guitarChordIdx=0, nextNoteTime=0, guitarTimer=null;
+function pluckNote(freq,t,vel){
+  const o=audioCtx.createOscillator(); o.type='triangle'; o.frequency.value=freq;
+  const o2=audioCtx.createOscillator(); o2.type='sawtooth'; o2.frequency.value=freq*2.006; // わずかにデチューンした倍音でギターの艶を足す
+  const filt=audioCtx.createBiquadFilter(); filt.type='lowpass'; filt.Q.value=0.7;
+  filt.frequency.setValueAtTime(3400,t); filt.frequency.exponentialRampToValueAtTime(380,t+1.5);
+  const g=audioCtx.createGain();
+  g.gain.setValueAtTime(0.0001,t);
+  g.gain.linearRampToValueAtTime(vel,t+0.006);
+  g.gain.exponentialRampToValueAtTime(0.0001,t+1.6);
+  const g2=audioCtx.createGain(); g2.gain.value=0.16;
+  o.connect(filt); o2.connect(g2).connect(filt);
+  filt.connect(g).connect(guitarGain);
+  o.start(t); o.stop(t+1.7); o2.start(t); o2.stop(t+1.7);
+}
+function scheduleGuitar(){
+  while(nextNoteTime<audioCtx.currentTime+0.2){
+    const chord=GUITAR_CHORDS[guitarChordIdx];
+    const idx=PICK_PATTERN[guitarStep%PICK_PATTERN.length];
+    pluckNote(chord[idx],nextNoteTime,idx===0?0.075:0.05);
+    nextNoteTime+=NOTE_GAP;
+    guitarStep++;
+    if(guitarStep%PICK_PATTERN.length===0) guitarChordIdx=(guitarChordIdx+1)%GUITAR_CHORDS.length;
+  }
 }
 function startMusic(){
   ensureAudio(); audioCtx.resume();
   master.gain.cancelScheduledValues(audioCtx.currentTime);
   master.gain.linearRampToValueAtTime(1,audioCtx.currentTime+1.2);
+  if(!guitarTimer){
+    nextNoteTime=audioCtx.currentTime+0.3; guitarStep=0; guitarChordIdx=0;
+    guitarTimer=setInterval(scheduleGuitar,100);
+  }
 }
 function stopMusic(){
   if(!audioCtx) return;
   master.gain.cancelScheduledValues(audioCtx.currentTime);
   master.gain.linearRampToValueAtTime(0,audioCtx.currentTime+0.8);
+  if(guitarTimer){ clearInterval(guitarTimer); guitarTimer=null; }
 }
 function playKeyClick(){
   if(!audioCtx) return;
@@ -918,8 +961,8 @@ bStart.onclick=()=>{if(state==='IDLE')startSession();};
 // ゲージをタップ：一時停止/再開とやめるのメニューを開閉
 focusGaugeEl.addEventListener('click',()=>{ focusMenuEl.classList.toggle('open'); });
 bPauseToggle.onclick=()=>{
-  if(state==='FOCUS'||state==='NUDGE'){ setState('PAUSED'); }
-  else if(state==='PAUSED'){ setState('FOCUS'); }
+  if(state==='FOCUS'||state==='NUDGE'){ setState('PAUSED'); stopMusic(); }
+  else if(state==='PAUSED'){ setState('FOCUS'); startMusic(); }
   focusMenuEl.classList.remove('open');
 };
 bQuit.onclick=()=>{ if(state==='FOCUS'||state==='NUDGE'||state==='PAUSED') endSession(false); };

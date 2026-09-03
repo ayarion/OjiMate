@@ -186,10 +186,10 @@ const screenLight=new THREE.PointLight(0xC8E89A,0,2.4); scene.add(screenLight);
 
 // ポリゴン多め
 const mat=c=>new THREE.MeshLambertMaterial({color:c});
-function box(w,h,d,c){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d,3,3,3),mat(c));m.castShadow=true;m.receiveShadow=true;return m;}
-function cyl(rt,rb,h,c,s=36){const m=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,s,3),mat(c));m.castShadow=true;m.receiveShadow=true;return m;}
-function sph(r,c,s=40){const m=new THREE.Mesh(new THREE.SphereGeometry(r,s,Math.round(s*0.7)),mat(c));m.castShadow=true;m.receiveShadow=true;return m;}
-function cone(r,h,c,s=16){const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,s,2),mat(c));m.castShadow=true;m.receiveShadow=true;return m;}
+function box(w,h,d,c){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d,5,5,5),mat(c));m.castShadow=true;m.receiveShadow=true;return m;}
+function cyl(rt,rb,h,c,s=48){const m=new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,s,4),mat(c));m.castShadow=true;m.receiveShadow=true;return m;}
+function sph(r,c,s=56){const m=new THREE.Mesh(new THREE.SphereGeometry(r,s,Math.round(s*0.75)),mat(c));m.castShadow=true;m.receiveShadow=true;return m;}
+function cone(r,h,c,s=24){const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,s,3),mat(c));m.castShadow=true;m.receiveShadow=true;return m;}
 function put(p,m,x,y,z){m.position.set(x,y,z);p.add(m);return m;}
 const rnd=(a,b)=>a+Math.random()*(b-a);
 
@@ -390,54 +390,59 @@ const man=new THREE.Group(); world.add(man);
 const bodyPivot=new THREE.Group(); man.add(bodyPivot);
 const headPivot=new THREE.Group(); headPivot.position.y=0.86; bodyPivot.add(headPivot);
 
-const belly=sph(0.44,C.shirt,48); belly.scale.set(1.05,0.92,0.88); put(bodyPivot,belly,0,0.62,0);
-const bellyLow=sph(0.42,C.shirt,44); bellyLow.scale.set(1.0,0.72,0.9); put(bodyPivot,bellyLow,0,0.42,0.04);
-put(bodyPivot,cyl(0.4,0.38,0.2,C.pants,40),0,0.24,0);
+const belly=sph(0.44,C.shirt,64); belly.scale.set(1.05,0.92,0.88); put(bodyPivot,belly,0,0.62,0);
+const bellyLow=sph(0.42,C.shirt,56); bellyLow.scale.set(1.0,0.72,0.9); put(bodyPivot,bellyLow,0,0.42,0.04);
+put(bodyPivot,cyl(0.4,0.38,0.2,C.pants,48),0,0.24,0);
 put(bodyPivot,box(0.66,0.06,0.5,0x4A566A),0,0.33,0);
-const head=sph(0.36,C.skin,48); head.scale.set(1,0.95,0.96); put(headPivot,head,0,0.26,0);
-const shineMat=new THREE.MeshPhongMaterial({color:0xFFEBC8,specular:0xFFFFFF,shininess:180});
-const shine=sph(0.325,0xFFEBC8,32); shine.material=shineMat; shine.scale.set(0.96,0.68,0.98); put(headPivot,shine,0,0.37,0.02);
-const glint=sph(0.09,0xFFFFFF,20); glint.material=new THREE.MeshPhongMaterial({color:0xFFFFFF,specular:0xFFFFFF,shininess:220,transparent:true,opacity:0.75});
-glint.scale.set(1,0.5,1); put(headPivot,glint,-0.04,0.46,0.14);
-const hairL=sph(0.19,0x6B5B4E,26); hairL.scale.set(0.5,0.6,0.9); put(headPivot,hairL,-0.33,0.16,0);
-const hairR=sph(0.19,0x6B5B4E,26); hairR.scale.set(0.5,0.6,0.9); put(headPivot,hairR,0.33,0.16,0);
-const hairB=sph(0.2,0x6B5B4E,24); hairB.scale.set(0.85,0.42,0.5); put(headPivot,hairB,0,0.12,-0.27);
-const earL=sph(0.09,C.skinD,20); earL.scale.set(0.5,1,0.8); put(headPivot,earL,-0.35,0.24,0);
-const earR=sph(0.09,C.skinD,20); earR.scale.set(0.5,1,0.8); put(headPivot,earR,0.35,0.24,0);
-put(headPivot,sph(0.05,0x3A322B,18),-0.13,0.29,0.31);
-put(headPivot,sph(0.05,0x3A322B,18),0.13,0.29,0.31);
-put(headPivot,sph(0.07,C.skinD,20),0,0.21,0.35);
-const stub=sph(0.3,0xBFA089,32); stub.scale.set(0.95,0.42,0.7); put(headPivot,stub,0,0.08,0.12);
+const head=sph(0.36,C.skin,64); head.scale.set(1,0.95,0.96);
+head.material=new THREE.MeshPhongMaterial({color:C.skin,specular:0xFFF6E6,shininess:130});
+put(headPivot,head,0,0.26,0);
+const hairL=sph(0.19,0x6B5B4E,32); hairL.scale.set(0.5,0.6,0.9); put(headPivot,hairL,-0.33,0.16,0);
+const hairR=sph(0.19,0x6B5B4E,32); hairR.scale.set(0.5,0.6,0.9); put(headPivot,hairR,0.33,0.16,0);
+const hairB=sph(0.2,0x6B5B4E,28); hairB.scale.set(0.85,0.42,0.5); put(headPivot,hairB,0,0.12,-0.27);
+const earL=sph(0.09,C.skinD,24); earL.scale.set(0.5,1,0.8); put(headPivot,earL,-0.35,0.24,0);
+const earR=sph(0.09,C.skinD,24); earR.scale.set(0.5,1,0.8); put(headPivot,earR,0.35,0.24,0);
+put(headPivot,sph(0.05,0x3A322B,20),-0.13,0.29,0.31);
+put(headPivot,sph(0.05,0x3A322B,20),0.13,0.29,0.31);
+put(headPivot,sph(0.07,C.skinD,22),0,0.21,0.35);
+const stub=sph(0.3,0xBFA089,40); stub.scale.set(0.95,0.42,0.7); put(headPivot,stub,0,0.08,0.12);
 put(headPivot,box(0.16,0.035,0.03,0x5A4B3F),-0.11,0.38,0.32);
 put(headPivot,box(0.16,0.035,0.03,0x5A4B3F),0.11,0.38,0.32);
 const mouth=box(0.15,0.025,0.02,0x6B4A42); put(headPivot,mouth,0,0.09,0.35);
-const sweatMat=new THREE.MeshPhongMaterial({color:0xCFEBF5,specular:0xFFFFFF,shininess:150,transparent:true,opacity:0.82});
-function sweatDrop(x,y,z,s){
-  const g=new THREE.Group();
-  const top=new THREE.Mesh(new THREE.SphereGeometry(0.05,16,12),sweatMat);
-  const bot=new THREE.Mesh(new THREE.ConeGeometry(0.05,0.1,16),sweatMat);
-  top.position.y=0.025; bot.position.y=-0.05; bot.rotation.x=Math.PI;
-  g.add(top,bot); g.scale.setScalar(s||1); g.position.set(x,y,z); headPivot.add(g);
-  return g;
-}
-const sweatL=sweatDrop(-0.37,0.32,0.10,1);
+
+// 頭のテカり: 実マテリアルの鏡面反射に加えて、周期的にキラッと光るスパークルを重ねる
+const sparkleMat=new THREE.MeshBasicMaterial({color:0xFFFFFF,transparent:true,opacity:0});
+const sparkle=new THREE.Group();
+put(sparkle,new THREE.Mesh(new THREE.BoxGeometry(0.16,0.022,0.022),sparkleMat),0,0,0);
+put(sparkle,new THREE.Mesh(new THREE.BoxGeometry(0.022,0.16,0.022),sparkleMat),0,0,0);
+put(sparkle,new THREE.Mesh(new THREE.BoxGeometry(0.09,0.014,0.014),sparkleMat),0.09,0.09,0);
+sparkle.position.set(0.02,0.44,0.15); headPivot.add(sparkle);
+
+// 汗: 静止した飾りではなく、こめかみから頬に垂れて消えるループアニメーション
+const sweatMat=new THREE.MeshPhongMaterial({color:0xCFEBF5,specular:0xFFFFFF,shininess:150,transparent:true,opacity:0});
+const sweatDrop=new THREE.Group();
+const sweatTop=new THREE.Mesh(new THREE.SphereGeometry(0.048,16,12),sweatMat);
+const sweatBot=new THREE.Mesh(new THREE.ConeGeometry(0.048,0.1,16),sweatMat);
+sweatTop.position.y=0.024; sweatBot.position.y=-0.048; sweatBot.rotation.x=Math.PI;
+sweatDrop.add(sweatTop,sweatBot); headPivot.add(sweatDrop);
+const SWEAT_CYCLE=2.6, SWEAT_FALL=1.9, SWEAT_X0=-0.36,SWEAT_Y0=0.33,SWEAT_Z0=0.08;
 
 function arm(sx){
   const up=new THREE.Group(); up.position.set(sx*0.48,0.79,0.05); bodyPivot.add(up);
-  put(up,cyl(0.095,0.085,0.30,C.skin,26),0,-0.15,0);
-  put(up,sph(0.095,C.skin,24),0,-0.30,0);
+  put(up,cyl(0.095,0.085,0.30,C.skin,32),0,-0.15,0);
+  put(up,sph(0.095,C.skin,32),0,-0.30,0);
   const fore=new THREE.Group(); fore.position.y=-0.30; up.add(fore);
-  put(fore,cyl(0.082,0.075,0.26,C.skin,26),0,-0.13,0);
-  put(fore,sph(0.098,C.skin,26),0,-0.28,0);
+  put(fore,cyl(0.082,0.075,0.26,C.skin,32),0,-0.13,0);
+  put(fore,sph(0.098,C.skin,32),0,-0.28,0);
   for(let i=-1;i<=1;i++) put(fore,box(0.032,0.06,0.1,C.skin),i*0.048,-0.33,0.05);
   return {up,fore};
 }
 const aL=arm(-1), aR=arm(1);
 function leg(sx){
   const up=new THREE.Group(); up.position.set(sx*0.19,0.24,0); bodyPivot.add(up);
-  put(up,cyl(0.115,0.1,0.22,C.skin,26),0,-0.11,0);
+  put(up,cyl(0.115,0.1,0.22,C.skin,32),0,-0.11,0);
   const sh=new THREE.Group(); sh.position.y=-0.22; up.add(sh);
-  put(sh,cyl(0.095,0.088,0.2,C.skin,26),0,-0.1,0);
+  put(sh,cyl(0.095,0.088,0.2,C.skin,32),0,-0.1,0);
   put(sh,box(0.17,0.07,0.28,0x6B5B4E),0,-0.21,0.05);
   return {up,sh};
 }
@@ -763,6 +768,22 @@ function tick(){
     f.m.position.set(Math.cos(f.p)*f.r,f.y+Math.sin(f.p*3)*0.12,Math.sin(f.p)*f.r*0.7);
     f.m.material.opacity+=((stinkOn?1:0)-f.m.material.opacity)*Math.min(1,dt*3);
   });
+
+  const spC=t%3.4;
+  const spFlash=spC<0.45?Math.sin((spC/0.45)*Math.PI):0;
+  sparkleMat.opacity=spFlash*0.9;
+  sparkle.scale.setScalar(0.5+spFlash*0.7);
+  sparkle.rotation.z=t*1.6;
+
+  const swC=t%SWEAT_CYCLE;
+  if(swC<SWEAT_FALL){
+    const p=swC/SWEAT_FALL;
+    sweatMat.opacity=0.82*Math.sin(Math.min(1,p/0.12)*Math.PI/2)*(p>0.75?Math.max(0,(1-p)/0.25):1);
+    sweatDrop.position.set(SWEAT_X0,SWEAT_Y0-p*0.24,SWEAT_Z0+p*0.05);
+    sweatDrop.scale.setScalar(0.8+p*0.35);
+  } else {
+    sweatMat.opacity=0;
+  }
 
   for(let i=pops.length-1;i>=0;i--){
     const p=pops[i]; p.t+=dt;

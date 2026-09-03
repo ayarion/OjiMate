@@ -24,7 +24,19 @@
   #ui > *{pointer-events:auto}
   .spacer{flex:1;pointer-events:none}
   .card{background:var(--card);border-radius:16px;padding:9px 12px;box-shadow:var(--shadow)}
-  #topRow{display:flex;gap:6px;align-items:flex-start}
+  /* 情報カードは常設せず、家をタップしたときだけせり上がる */
+  #topRow{display:flex;gap:6px;align-items:flex-start;
+    position:absolute;left:9px;right:9px;top:9px;z-index:8;
+    opacity:0;transform:translateY(-10px);pointer-events:none;transition:opacity .22s,transform .22s}
+  #ui.screen-home #topRow.open{opacity:1;transform:none;pointer-events:auto}
+  #tapHint{position:absolute;left:50%;bottom:96px;transform:translateX(-50%);
+    font-size:11px;font-weight:700;color:#fff;background:rgba(38,36,31,.55);
+    padding:5px 12px;border-radius:999px;pointer-events:none;z-index:5;
+    opacity:0;transition:opacity .4s;white-space:nowrap}
+  #tapHint.show{opacity:1}
+  /* 起動演出のあいだは下のUIを伏せておく */
+  #ui.intro .on-home{opacity:0;transition:opacity .5s}
+  #ui:not(.intro) .on-home{opacity:1;transition:opacity .5s}
   #home{flex:1}
   #stageName{font-size:14px;font-weight:700}
   #chips{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap}
@@ -40,23 +52,84 @@
   .rec.ok{background:#E2FBF2;color:#1B8A6C}
   .rec.ng{background:#FFEFE9;color:#C4633F}
   #logEmpty{font-size:9.5px;color:var(--ink-soft)}
-  #ui.busy .idle-only{display:none!important}
-  #focusGauge{display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-    flex-direction:column;align-items:center;gap:8px;pointer-events:auto;cursor:pointer;
-    background:none;box-shadow:none;padding:0}
-  #ui.busy #focusGauge{display:flex}
-  #gaugeSvg{width:34vw;max-width:180px;min-width:120px}
+
+  /* ===== 画面ルーター ===== */
+  #ui{transition:opacity .2s}
+  .on-home{display:none!important}
+  .on-pick{display:none!important}
+  .on-focus{display:none!important}
+  #ui.screen-home .on-home{display:flex!important}
+  #ui.screen-pick .on-pick{display:flex!important}
+  #ui.screen-focus .on-focus{display:flex!important}
+  #ui.screen-home #dayQ:not([hidden]){display:flex}
+  #ui.screen-home #dayQ[hidden]{display:none}
+  #ui.screen-home #ctrl[hidden]{display:none!important}
+
+  /* 作業中は右下のゲージだけ。#say は長押し確認の間だけ例外的にフェード表示 */
+  #ui.screen-focus #say{
+    display:flex!important;position:absolute;left:12px;right:118px;bottom:14px;
+    opacity:0;pointer-events:none;transition:opacity .2s;margin:0;
+  }
+  #ui.screen-focus #say.show-confirm{opacity:1}
+
+  #backBtn{position:absolute;left:12px;top:12px;z-index:7;pointer-events:auto;
+    width:36px;height:36px;border-radius:50%;border:0;background:var(--card);box-shadow:var(--shadow);
+    font-size:16px;color:var(--ink);cursor:pointer;display:none;align-items:center;justify-content:center}
+  #backBtn:active{transform:translateY(1px)}
+
+  /* 正方形のゲージが、タップで長方形に伸びて中に操作を出す */
+  #focusGauge{display:none;position:absolute;right:14px;bottom:14px;
+    width:76px;height:76px;flex-direction:column;align-items:stretch;
+    pointer-events:auto;cursor:pointer;z-index:6;overflow:hidden;
+    background:rgba(38,36,31,.42);border-radius:20px;box-shadow:var(--shadow);
+    transition:width .28s cubic-bezier(.22,.8,.28,1),height .28s cubic-bezier(.22,.8,.28,1),border-radius .28s;}
+  #ui.screen-focus #focusGauge{display:flex}
+  #focusGauge.open{width:168px;height:206px;border-radius:20px;cursor:default}
+  #focusGauge .gwrap{position:relative;width:76px;height:76px;flex:none;align-self:center}
+  #gaugeSvg{width:76px;height:76px;display:block}
   #gaugeSvg rect{fill:none;stroke-width:7;stroke-linecap:round;paint-order:stroke}
   #gaugeBg{stroke:rgba(255,255,255,.4)}
   #gaugeFg{stroke:var(--mint);transition:stroke-dashoffset .25s linear}
   #focusGauge.paused #gaugeFg{stroke:var(--sun)}
-  #gaugeTime{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;color:#fff;
-    text-shadow:0 2px 6px rgba(0,0,0,.35);letter-spacing:.02em}
-  #focusMenu{display:none;position:absolute;left:50%;top:calc(50% + 26vw);transform:translateX(-50%);
-    max-width:min(70vw,240px);flex-direction:column;gap:6px;pointer-events:auto;z-index:6}
-  #focusMenu.open{display:flex}
-  #lenPick{display:flex;align-items:center;gap:8px;padding:6px 9px}
-  #lenPick h3{margin:0;font-size:10px;font-weight:700;color:var(--ink-soft);white-space:nowrap}
+  #gaugeTime{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;color:#fff;
+    text-shadow:0 2px 6px rgba(0,0,0,.4);letter-spacing:.01em;pointer-events:none}
+
+  #focusMenu{display:none;flex-direction:column;gap:7px;padding:8px 10px 10px;pointer-events:auto}
+  #focusGauge.open #focusMenu{display:flex}
+  #focusMenu .btn{width:100%}
+
+  /* 「やめる」長押し確定 */
+  #bQuit{position:relative;overflow:hidden}
+  #bQuit .holdRing{position:absolute;inset:0;border-radius:12px;
+    background:conic-gradient(var(--coral) calc(var(--hold,0)*1%), transparent 0);
+    opacity:.55;pointer-events:none}
+  #bQuit span{position:relative}
+
+  #lenPick{display:none}
+
+  /* ===== 時間選択画面 ===== */
+  #pickTop{display:flex;align-items:center;gap:8px}
+  #pickCard{flex:1;text-align:center;padding:14px 12px}
+  #pickTime{font-size:46px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.01em}
+  #pickTotal{font-size:11px;color:var(--ink-soft);font-weight:700;margin-top:2px}
+  #pickSliderWrap{padding:6px 4px 2px}
+  #pickSlider{width:100%;-webkit-appearance:none;appearance:none;height:8px;border-radius:999px;
+    background:#F0EBE2;outline:none;margin:10px 0 4px;position:relative}
+  #pickSlider::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;
+    background:#fff;border:3px solid var(--coral);box-shadow:0 2px 6px rgba(63,58,52,.3);cursor:pointer}
+  #pickSlider::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;
+    border:3px solid var(--coral);box-shadow:0 2px 6px rgba(63,58,52,.3);cursor:pointer}
+  #pickTicks{display:flex;justify-content:space-between;font-size:10.5px;color:var(--ink-soft);font-weight:700;padding:0 2px}
+  #pickSug{position:relative;height:4px;margin:0 11px}
+  #pickSugDot{position:absolute;top:-3px;width:10px;height:10px;border-radius:50%;background:var(--sky);
+    border:2px solid #fff;box-shadow:0 1px 3px rgba(63,58,52,.3);transform:translateX(-50%)}
+  #pickTagLabel{font-size:11px;font-weight:700;color:var(--ink-soft);margin:12px 0 6px}
+  #pickTags{display:flex;gap:6px;flex-wrap:wrap}
+  #pickTags button{border:0;border-radius:999px;padding:7px 14px;font-family:inherit;font-weight:700;
+    font-size:12.5px;background:#F3EFE8;color:var(--ink-soft);cursor:pointer;transition:.16s}
+  #pickTags button[aria-pressed="true"]{background:var(--coral);color:#fff}
+
   #stageName{cursor:pointer;-webkit-user-select:none;user-select:none}
   .seg{display:flex;background:#F3EFE8;border-radius:11px;padding:2px;gap:2px;flex:1}
   .seg button{flex:1;border:0;background:transparent;border-radius:9px;padding:5px 0;font-family:inherit;
@@ -91,8 +164,10 @@
 <div id="phone">
   <div id="stage"></div>
   <div id="coin"></div>
-  <div id="ui">
-    <div id="topRow" class="idle-only">
+  <button id="backBtn" aria-label="戻る">←</button>
+  <div id="tapHint">家をタップすると今の状況が見られます</div>
+  <div id="ui" class="screen-home">
+    <div id="topRow">
       <div class="card" id="home">
         <div id="stageName" title="長押しで関係のプレビューを切替">ボロアパート</div>
         <div id="chips">
@@ -105,49 +180,73 @@
         <div id="logList"><span id="logEmpty">終えた分も、途中でやめた分も残ります。</span></div>
       </div>
     </div>
-    <div class="spacer"></div>
-    <div class="card idle-only" id="lenPick">
-      <h3>時間</h3>
-      <div class="seg" id="lenSeg">
-        <button data-min="15" aria-pressed="false">15分</button>
-        <button data-min="30" aria-pressed="false">30分</button>
-        <button data-min="50" aria-pressed="true">50分</button>
-      </div>
-    </div>
-    <div class="card idle-only" id="say"><div><div id="sayName">おじさん</div><div id="sayText">お、来たな。今日どうする？</div></div></div>
-    <div id="ctrl" class="idle-only">
+    <div class="spacer on-home"></div>
+    <div class="card on-home" id="say"><div><div id="sayName">おじさん</div><div id="sayText">お、来たな。今日どうする？</div></div></div>
+    <div id="ctrl" class="on-home">
       <button class="btn primary" id="bStart">一緒に始める</button>
     </div>
-    <div class="card idle-only" id="dayQ" hidden>
+    <div class="card" id="dayQ" hidden>
       <div id="dqText">今日の調子はどうやった？</div>
       <div id="dqBtns">
         <button class="btn plain" id="dqTough">しんどかった</button>
         <button class="btn sky" id="dqOk">いけた</button>
       </div>
     </div>
-    <div id="focusGauge">
-      <svg id="gaugeSvg" viewBox="0 0 100 100">
-        <rect id="gaugeBg" x="6" y="6" width="88" height="88" rx="18"/>
-        <rect id="gaugeFg" x="6" y="6" width="88" height="88" rx="18"/>
-      </svg>
-      <div id="gaugeTime">50:00</div>
+
+    <!-- ===== 時間選択画面 ===== -->
+    <div class="spacer on-pick"></div>
+    <div id="pickTop" class="card on-pick">
+      <div id="pickCard">
+        <div id="pickTime">00:50</div>
+        <div id="pickTotal">合計: 50 分</div>
+        <div id="pickSliderWrap">
+          <input type="range" id="pickSlider" min="5" max="120" step="5" value="50">
+          <div id="pickSug"><div id="pickSugDot"></div></div>
+          <div id="pickTicks"><span>5m</span><span>1h</span><span>2h</span></div>
+        </div>
+        <div id="pickTagLabel">セッションタグ</div>
+        <div id="pickTags">
+          <button data-tag="勉強" aria-pressed="true">勉強</button>
+          <button data-tag="制作" aria-pressed="false">制作</button>
+          <button data-tag="読書" aria-pressed="false">読書</button>
+          <button data-tag="その他" aria-pressed="false">その他</button>
+        </div>
+      </div>
     </div>
-    <div id="focusMenu">
-      <button class="btn sky" id="bPauseToggle">一時停止</button>
-      <button class="btn plain" id="bQuit">やめる</button>
+    <div class="card on-pick" id="sayPick"><div><div id="sayNamePick">おじさん</div><div id="sayTextPick">今日はどれくらいにする？</div></div></div>
+    <div class="on-pick" id="pickCtrl">
+      <button class="btn primary" id="bPickStart">セッション開始</button>
+    </div>
+
+    <!-- ===== 作業中画面 ===== -->
+    <div id="focusGauge" class="on-focus">
+      <div class="gwrap">
+        <svg id="gaugeSvg" viewBox="0 0 100 100">
+          <rect id="gaugeBg" x="6" y="6" width="88" height="88" rx="18"/>
+          <rect id="gaugeFg" x="6" y="6" width="88" height="88" rx="18"/>
+        </svg>
+        <div id="gaugeTime">50:00</div>
+      </div>
+      <div id="focusMenu">
+        <button class="btn sky" id="bPauseToggle">一時停止</button>
+        <button class="btn plain" id="bQuit"><span>やめる（長押し）</span><div class="holdRing"></div></button>
+      </div>
     </div>
   </div>
 </div>
 
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 let state='IDLE', lv=1;
+let uiScreen='HOME';         // 'HOME' | 'PICK' | 'FOCUS'
+let confirmingQuit=false;    // やめる長押し確認中フラグ（NUDGEとは独立）
 let sTime=0, poseT=0;
 let headUp=0, nodT=-1, sitAmt=0, lieAmt=0;
 let decayT=0, decayLv=0;
 let act=null, actT=0, actDur=0;
 const DEMO_SEC_PER_MIN=0.52, YEN_PER_MIN=240;
-let SESSION_MIN=50, SESSION_SEC=SESSION_MIN*DEMO_SEC_PER_MIN;
+let SESSION_MIN=50, SESSION_SEC=SESSION_MIN*DEMO_SEC_PER_MIN; // store 読み込み後に前回値で上書きする
 
 // ===== 記憶（localStorage） =====
 // 関係は数値としてユーザーには見せず、口調や踏み込み方だけで伝える。
@@ -161,6 +260,7 @@ function defaultStore(){
     recent:[], // 直近の完走/中断の履歴（傾向判定用、古いものから捨てる）
     lastQuestionDay:null, todayAnswer:null, // 'tough' | 'ok'
     money:0, stageIdx:0,
+    lastSessionMin:50,
     ojiMateNightSessions:0
   };
 }
@@ -173,6 +273,7 @@ function loadStore(){
 }
 function saveStore(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(store)); }catch(e){} }
 const store=loadStore();
+SESSION_MIN=store.lastSessionMin||50; SESSION_SEC=SESSION_MIN*DEMO_SEC_PER_MIN;
 
 function daysSinceLastVisit(){
   if(!store.lastVisitDay) return 0;
@@ -221,7 +322,7 @@ function suggestedMinutes(){
   if(tt===1) return 30;
   return 50;
 }
-function shouldAskDayQuestion(){ return true; } // 作業後は毎回聞く
+function shouldAskDayQuestion(ok){ return ok===true; } // タスク完了後にだけ聞く。中断時は聞かない
 function answerDayQuestion(a){
   store.todayAnswer=a; store.lastQuestionDay=todayStr(); saveStore();
   refreshLenSuggestion();
@@ -262,7 +363,7 @@ const C={
   leaf:0x4E8B43, leafD:0x3E7038, leafDead:0x7C6F4E, trunk:0x8A6444, trunkDead:0x6B5B48,
   skin:0xE8BE96, skinD:0xD0A379, shirt:0xF3F0E8, pants:0xF1EEE4,
   wallOld:0x9B9082, roofOld:0x6E675C, rust:0x8A6B4E, woodOld:0x86735C,
-  wallNew:0xDFD2B6, roofNew:0xB0705A, roofTile:0x7E93A6, wood:0xB4906A,
+  wallNew:0xF3E4C4, roofNew:0xE8836A, roofTile:0x8FBCDA, wood:0xB4906A, trim:0xFFF8EC,
   glass:0x8FB6BE, glassLit:0xCFE6A0, hedge:0x4C8542, stoneW:0xBFB6A4,
   trash:0x9A8E72, trashB:0x7E8C86
 };
@@ -279,13 +380,15 @@ renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 document.getElementById('stage').appendChild(renderer.domElement);
 
-scene.add(new THREE.HemisphereLight(0xCFE2EC,0x6F8A56,0.58));
+const hemi=new THREE.HemisphereLight(0xCFE2EC,0x6F8A56,0.58); scene.add(hemi);
 const sun=new THREE.DirectionalLight(0xFFF2DC,0.62);
 sun.position.set(8,15,7); sun.castShadow=true; sun.shadow.mapSize.set(2048,2048);
 const sc=sun.shadow.camera; sc.left=-15;sc.right=15;sc.top=15;sc.bottom=-15;sc.near=1;sc.far=46;
 sun.shadow.bias=-0.0012; scene.add(sun);
 const fill=new THREE.DirectionalLight(0xBBD4E8,0.15); fill.position.set(-7,5,-6); scene.add(fill);
+
 const screenLight=new THREE.PointLight(0xC8E89A,0,2.4); scene.add(screenLight);
+const porchLight=new THREE.PointLight(0xFFDCA8,0.55,7.5,2); porchLight.position.set(0.5,2.0,2.2); scene.add(porchLight);
 
 // ポリゴン多め
 const mat=c=>new THREE.MeshLambertMaterial({color:c});
@@ -294,7 +397,7 @@ function cyl(rt,rb,h,c,s=48){const m=new THREE.Mesh(new THREE.CylinderGeometry(r
 function sph(r,c,s=56){const m=new THREE.Mesh(new THREE.SphereGeometry(r,s,Math.round(s*0.75)),mat(c));m.castShadow=true;m.receiveShadow=true;return m;}
 function cone(r,h,c,s=24){const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,s,3),mat(c));m.castShadow=true;m.receiveShadow=true;return m;}
 function put(p,m,x,y,z){m.position.set(x,y,z);p.add(m);return m;}
-const rnd=(a,b)=>a+Math.random()*(b-a);
+function rnd(a,b){ return a+Math.random()*(b-a); } // 関数宣言にして巻き上げさせる（雨の初期化が先に走るため）
 
 // ===== 地面 =====
 const world=new THREE.Group(); scene.add(world);
@@ -302,9 +405,46 @@ const plot=cyl(13,12.6,0.9,C.dirt,72); plot.position.y=-0.45; plot.receiveShadow
 put(world,cyl(12.7,12.4,0.28,C.soil,72),0,-0.97,0);
 
 let envGroup=null;
+// ===== 時間帯と天気 =====
+// 開くたびに同じ画面にしない。実時間の時間帯で光を変え、日ごとに天気を決める。
+function timePhase(){
+  const h=new Date().getHours();
+  if(h>=5&&h<9)  return 'dawn';
+  if(h>=9&&h<16) return 'day';
+  if(h>=16&&h<19)return 'dusk';
+  return 'night';
+}
+// 天気は日付から決定的に決める（同じ日に開き直しても変わらない）
+function todayWeather(){
+  const d=new Date(); const seed=(d.getFullYear()*372+d.getMonth()*31+d.getDate());
+  const r=((seed*9301+49297)%233280)/233280;
+  return r<0.25?'rain':'clear';
+}
+const PHASE={
+  dawn :{sky:0xE9C9A8, sun:0xFFE0B4, si:0.52, hemiS:0xEBD6C4, hemiG:0x8A8A66, hi:0.55, fill:0.12},
+  day  :{sky:0xA9D3E2, sun:0xFFF2DC, si:0.62, hemiS:0xCFE2EC, hemiG:0x6F8A56, hi:0.58, fill:0.15},
+  dusk :{sky:0xE2A583, sun:0xFFC98A, si:0.42, hemiS:0xE4C0AA, hemiG:0x7A7458, hi:0.46, fill:0.14},
+  night:{sky:0x3E4E68, sun:0xC7D8F0, si:0.34, hemiS:0x5C7090, hemiG:0x3A465C, hi:0.50, fill:0.20}
+};
+let curPhase='day', curWeather='clear';
 function updateSky(idx){
-  const sk=idx===0?0x9E9A8E:0xA9D3E2;
-  scene.background.setHex(sk); scene.fog.color.setHex(sk);
+  curPhase=timePhase(); curWeather=todayWeather();
+  const p=PHASE[curPhase];
+  let sky=p.sky;
+  if(idx===0) sky=mixHex(sky,0x9E9A8E,0.45);      // スラム段階はくすませる
+  if(curWeather==='rain') sky=mixHex(sky,0x8A93A0,0.55);
+  scene.background.setHex(sky); scene.fog.color.setHex(sky);
+  sun.color.setHex(p.sun);
+  sun.intensity=p.si*(curWeather==='rain'?0.55:1);
+  hemi.color.setHex(p.hemiS); hemi.groundColor.setHex(p.hemiG);
+  hemi.intensity=p.hi*(curWeather==='rain'?0.85:1);
+  fill.intensity=p.fill;
+  setRain(curWeather==='rain');
+  setWindowGlow(curPhase==='night'||curPhase==='dusk'||curWeather==='rain');
+}
+function mixHex(a,b,k){
+  const ar=(a>>16)&255,ag=(a>>8)&255,ab=a&255, br=(b>>16)&255,bg=(b>>8)&255,bb=b&255;
+  return (Math.round(ar+(br-ar)*k)<<16)|(Math.round(ag+(bg-ag)*k)<<8)|Math.round(ab+(bb-ab)*k);
 }
 function buildEnv(idx){
   const g=new THREE.Group();
@@ -426,16 +566,109 @@ function setEnv(idx){ if(envGroup) world.remove(envGroup); envGroup=buildEnv(idx
 
 // ===== 家 =====
 let houseGroup=null; const pops=[];
+// ===== 雨 =====
+const rainGroup=new THREE.Group(); rainGroup.visible=false; scene.add(rainGroup);
+const rainDrops=[];
+for(let i=0;i<160;i++){
+  const m=new THREE.Mesh(new THREE.BoxGeometry(0.02,0.42,0.02),
+    new THREE.MeshBasicMaterial({color:0xBFD6E4,transparent:true,opacity:0.5}));
+  m.position.set(rnd(-13,13),rnd(0,14),rnd(-13,13));
+  rainGroup.add(m); rainDrops.push({m,sp:rnd(9,15)});
+}
+function setRain(on){ rainGroup.visible=on; }
+
+// ===== 窓の灯り（夜・夕方・雨のとき点く） =====
+let windowsLit=false;
+function setWindowGlow(on){ windowsLit=on; applyWindowGlow(); }
+function applyWindowGlow(){
+  if(!houseGroup) return;
+  houseGroup.traverse(o=>{
+    if(o.name==='tvScreen'&&o.material) o.material.color.setHex(windowsLit?0x9FD8E0:0x2E3A38);
+  });
+}
+
+// 前面(+z)の壁を作らないドールハウス断面。中の暮らしが見えるようにする。
+function shell(g,w,h,d,col,floorCol){
+  const t=0.12;
+  put(g,box(w,h,t,col),0,h/2,-d/2);            // 奥の壁
+  put(g,box(t,h,d,col),-w/2,h/2,0);            // 左の壁
+  put(g,box(t,h,d,col), w/2,h/2,0);            // 右の壁
+  put(g,box(w,0.1,d,floorCol||0xA98B63),0,0.05,0); // 床
+  // 前面は腰までの立ち上がりだけ残して、中が覗けるようにする
+  put(g,box(w,0.26,t,col),0,0.13,d/2);
+}
+// 室内の小物。段階が上がるほど片づいていく。
+function interior(g,idx){
+  const messy=idx<=1;
+  if(idx<=1){
+    // 万年床
+    put(g,box(1.15,0.14,0.8,messy?0x9E9384:0xD8CBB0),-0.7,0.16,-0.35);
+    put(g,box(0.42,0.12,0.3,messy?0xB9AE9A:0xE8DCC0),-0.95,0.28,-0.6); // 枕
+    // ちゃぶ台
+    put(g,box(0.7,0.05,0.5,C.wood),0.65,0.34,-0.2);
+    [[-0.28,-0.18],[0.28,-0.18],[-0.28,0.18],[0.28,0.18]].forEach(p=>
+      put(g,box(0.05,0.28,0.05,C.woodOld),0.65+p[0],0.18,-0.2+p[1]));
+    // ブラウン管テレビ
+    put(g,box(0.55,0.45,0.42,0x6E675C),0.75,0.28,-0.85);
+    const tv=box(0.4,0.3,0.03,0x2E3A38); put(g,tv,0.75,0.32,-0.63);
+    tv.name='tvScreen';
+    if(messy){
+      // 散らかったカップ麺と空き缶
+      for(let i=0;i<7;i++) put(g,cyl(0.07,0.06,0.1,[0xE0B04A,0xD9764F,0xE8E2D2][i%3],14),
+        rnd(-1.2,1.2),0.16,rnd(-0.9,0.5));
+      for(let i=0;i<4;i++){ const c=cyl(0.045,0.045,0.12,0x9AA6A2,12); c.rotation.z=1.57;
+        put(g,c,rnd(-1.2,1.2),0.16,rnd(-0.9,0.5)); }
+    }
+  } else {
+    // 片づいた部屋：ソファとラグと本棚
+    put(g,box(1.3,0.4,0.6,0x8FA9B8),-0.55,0.3,-0.5);
+    put(g,box(1.3,0.35,0.16,0x7E97A6),-0.55,0.55,-0.72);
+    put(g,box(1.5,0.03,1.0,0xC9B48E),0.1,0.11,0.2);
+    put(g,box(0.5,0.9,0.28,C.wood),1.15,0.55,-0.8);
+    put(g,box(0.75,0.05,0.5,C.wood),0.55,0.42,-0.1);
+    const tv=box(0.62,0.36,0.04,0x2E3A38); put(g,tv,-0.1,0.62,-1.0); tv.name='tvScreen';
+    put(g,box(0.7,0.06,0.16,0x6E675C),-0.1,0.42,-1.0);
+  }
+}
+
+// 丸窓：ガラス円盤＋リング枠＋十字の桟。四角い窓よりぐっとかわいくなる。
+function roundWindow(g,x,y,z,r,frameColor){
+  const fc=frameColor||C.trim;
+  const glassDisc=new THREE.Mesh(new THREE.CircleGeometry(r*0.8,24), mat(C.glass));
+  glassDisc.position.set(x,y,z); glassDisc.receiveShadow=true; g.add(glassDisc);
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(r*0.82,r*0.17,10,28), mat(fc));
+  ring.position.set(x,y,z); ring.castShadow=true; g.add(ring);
+  put(g,box(r*1.5,0.018,0.018,fc),x,y,z+0.01);
+  put(g,box(0.018,r*1.5,0.018,fc),x,y,z+0.01);
+}
+// 窓辺の小さな花箱
+function flowerBox(g,x,y,z,w){
+  put(g,box(w,0.1,0.13,C.woodOld),x,y,z);
+  const cols=[0xE8845E,0xF3D06A,0xE8A0BE,0xFFFFFF];
+  const n=Math.max(3,Math.round(w/0.15));
+  for(let i=0;i<n;i++){
+    const fx=x-w/2+0.09+i*((w-0.18)/Math.max(1,n-1));
+    put(g,sph(0.05,cols[i%cols.length],10),fx,y+0.09,z+0.03);
+    put(g,cyl(0.013,0.013,0.05,0x4E8B43,6),fx,y+0.04,z+0.03);
+  }
+}
+// 煙突からの、ふんわりした煙のかたまり（控えめ・静的）
+function chimneyPuff(g,x,y,z){
+  [[0,0,0.4,0.55],[0.08,0.14,0.32,0.45],[-0.06,0.25,0.24,0.35]].forEach(p=>{
+    const m=new THREE.Mesh(new THREE.SphereGeometry(p[2],14,10),
+      new THREE.MeshLambertMaterial({color:0xF3EFE6,transparent:true,opacity:p[3]}));
+    m.position.set(x+p[0],y+p[1],z); g.add(m);
+  });
+}
+
 function buildHouse(idx){
   const g=new THREE.Group(); g.position.set(0,0,-2.6);
   if(idx===0){
-    put(g,box(3.0,2.0,2.2,C.wallOld),0,1.0,0);
+    shell(g,3.0,2.0,2.2,C.wallOld,0x8A7A5E);
+    interior(g,0);
     put(g,box(3.3,0.18,2.5,C.roofOld),0,2.09,0);
-    put(g,box(0.55,0.95,0.08,C.woodOld),-0.75,0.48,1.13);
-    put(g,box(0.62,0.55,0.08,C.glass),0.72,1.25,1.13);
-    put(g,box(0.5,0.34,0.06,C.rust),1.1,0.5,1.12);
-    put(g,box(0.34,0.5,0.06,C.rust),-1.2,1.5,1.12);
-    put(g,box(0.28,0.42,0.05,C.rust),0.2,0.9,1.12);
+    put(g,box(0.5,0.34,0.06,C.rust),1.45,0.6,-1.12);
+    put(g,box(0.34,0.5,0.06,C.rust),-1.5,1.5,0.3);
     for(let i=0;i<4;i++) put(g,box(0.8,0.1,0.42,C.woodOld),1.85,0.28+i*0.34,0.8-i*0.42);
     put(g,cyl(0.05,0.05,1.5,C.rust,12),2.2,0.9,0.6);
     const pole=cyl(0.04,0.04,1.9,0xB9B4A8,12); pole.rotation.z=Math.PI/2; put(g,pole,-0.2,1.55,1.35);
@@ -444,37 +677,47 @@ function buildHouse(idx){
     const ant=cyl(0.035,0.035,1.2,0x6B655C,10); ant.rotation.z=0.22; put(g,ant,1.0,2.75,-0.4);
     put(g,box(0.7,0.04,0.04,0x6B655C),1.15,3.28,-0.4);
     for(let i=0;i<7;i++) put(g,cone(0.13,0.42,0x8A8058,6),rnd(-1.6,1.8),0.21,rnd(1.5,2.3));
+    // 荒れてはいるが、ドアの脇にだけ小さな鉢植えがある
+    put(g,cyl(0.11,0.14,0.16,0xB9805A,10),-1.55,0.08,1.05);
+    put(g,sph(0.07,0xE8A0BE,10),-1.55,0.24,1.05);
   }
   if(idx===1){
-    put(g,box(3.0,2.0,2.2,C.wallNew),0,1.0,0);
+    shell(g,3.0,2.0,2.2,C.wallNew,0xC2A87E);
+    interior(g,1);
     put(g,box(3.3,0.2,2.5,C.roofNew),0,2.1,0);
-    put(g,box(0.55,0.95,0.08,C.wood),-0.75,0.48,1.13);
-    put(g,box(0.62,0.55,0.08,C.glass),0.72,1.25,1.13);
-    put(g,box(0.62,0.55,0.08,C.glass),-0.8,1.25,1.13);
+    put(g,box(3.34,0.05,0.2,C.trim),0,2.0,1.24); // 屋根の縁取り
     for(let i=0;i<4;i++) put(g,box(0.8,0.1,0.42,C.wood),1.85,0.28+i*0.34,0.8-i*0.42);
+    roundWindow(g,-1.1,1.15,1.11,0.32);
+    flowerBox(g,-1.1,0.9,1.2,0.5);
     put(g,cyl(0.16,0.19,0.26,0xC08A63,16),0.05,0.13,1.4);
     put(g,sph(0.16,0xD86A6A,16),0.05,0.34,1.4);
-    put(g,cyl(0.035,0.035,1.2,0x6B655C,10),1.0,2.75,-0.4);
-    put(g,box(0.7,0.04,0.04,0x6B655C),1.0,3.3,-0.4);
   }
   if(idx===2){
-    put(g,box(3.2,1.7,2.6,C.wallNew),0,0.85,0);
+    shell(g,3.2,1.7,2.6,C.wallNew,0xC9B48E);
+    interior(g,2);
     const rf=cone(2.5,1.15,C.roofNew,4); rf.rotation.y=Math.PI/4; put(g,rf,0,2.27,0);
-    put(g,box(0.6,1.0,0.08,C.wood),0,0.5,1.33);
-    put(g,box(0.62,0.6,0.08,C.glass),-1.0,1.1,1.33);
-    put(g,box(0.62,0.6,0.08,C.glass),1.0,1.1,1.33);
+    const rfCap=cyl(0.1,0.1,2.2,C.trim,10); rfCap.rotation.z=Math.PI/2; put(g,rfCap,0,2.36,0); // 棟の白い縁
     put(g,box(3.5,0.12,0.6,C.roofNew),0,1.62,1.5);
+    roundWindow(g,-0.95,1.05,1.31,0.34);
+    roundWindow(g,0.95,1.05,1.31,0.34);
+    flowerBox(g,-0.95,0.78,1.42,0.52);
+    flowerBox(g,0.95,0.78,1.42,0.52);
     for(let i=-2;i<=2;i++) put(g,cyl(0.06,0.06,0.6,C.wood,12),i*0.8,0.3,2.4);
     put(g,box(3.4,0.06,0.06,C.wood),0,0.55,2.4);
   }
   if(idx===3){
-    put(g,box(3.2,1.7,2.6,C.wallNew),0,0.85,0);
+    shell(g,3.2,1.7,2.6,C.wallNew,0xC9B48E);
+    interior(g,3);
     put(g,box(2.9,1.5,2.4,C.wallNew),0,2.45,0);
     const rf=cone(2.35,1.05,C.roofTile,4); rf.rotation.y=Math.PI/4; put(g,rf,0,3.72,0);
     put(g,box(0.6,1.0,0.08,C.wood),0,0.5,1.33);
-    put(g,box(0.62,0.6,0.08,C.glass),-1.0,1.1,1.33);
-    put(g,box(0.62,0.6,0.08,C.glass),1.0,1.1,1.33);
-    put(g,box(0.9,0.7,0.08,C.glass),0,2.6,1.23);
+    const doorArch=new THREE.Mesh(new THREE.CircleGeometry(0.3,20,0,Math.PI),mat(C.wood));
+    doorArch.position.set(0,1.0,1.335); doorArch.castShadow=true; g.add(doorArch);
+    roundWindow(g,-1.0,1.1,1.335,0.3);
+    roundWindow(g,1.0,1.1,1.335,0.3);
+    roundWindow(g,0,2.6,1.235,0.32);
+    flowerBox(g,-1.0,0.85,1.46,0.48);
+    flowerBox(g,1.0,0.85,1.46,0.48);
     put(g,box(2.2,0.12,0.7,C.wood),0,2.1,1.5);
     for(let i=-2;i<=2;i++) put(g,cyl(0.05,0.05,0.5,C.wood,12),i*0.5,2.35,1.78);
     put(g,box(2.3,0.06,0.06,C.wood),0,2.6,1.78);
@@ -483,20 +726,27 @@ function buildHouse(idx){
     put(g,box(3.5,0.06,0.06,C.wood),0,0.55,2.5);
   }
   if(idx===4){
-    put(g,box(3.6,1.8,2.8,C.wallNew),0,0.9,0);
+    shell(g,3.6,1.8,2.8,C.wallNew,0xD3BE96);
+    interior(g,4);
     put(g,box(3.2,1.6,2.6,C.wallNew),0,2.6,0);
     const rf=cone(2.6,1.15,C.roofTile,4); rf.rotation.y=Math.PI/4; put(g,rf,0,3.98,0);
     put(g,box(1.9,1.5,1.9,C.wallNew),-2.6,0.75,0.4);
     const rf2=cone(1.6,0.8,C.roofTile,4); rf2.rotation.y=Math.PI/4; put(g,rf2,-2.6,1.9,0.4);
+    chimneyPuff(g,1.3,4.5,-0.5); // 煙突からふんわり煙
     put(g,box(0.66,1.05,0.08,C.wood),0,0.52,1.43);
-    put(g,box(0.66,0.62,0.08,C.glass),-1.1,1.2,1.43);
-    put(g,box(0.66,0.62,0.08,C.glass),1.1,1.2,1.43);
-    put(g,box(1.0,0.75,0.08,C.glass),0,2.75,1.33);
+    roundWindow(g,-1.1,1.2,1.47,0.33);
+    roundWindow(g,1.1,1.2,1.47,0.33);
+    roundWindow(g,0,2.75,1.37,0.36);
+    flowerBox(g,-1.1,0.92,1.6,0.5);
+    flowerBox(g,1.1,0.92,1.6,0.5);
     put(g,box(2.4,0.12,0.75,C.wood),0,2.25,1.6);
     for(let i=-2;i<=2;i++) put(g,cyl(0.05,0.05,0.5,C.wood,12),i*0.55,2.5,1.9);
     put(g,box(2.5,0.06,0.06,C.wood),0,2.75,1.9);
     put(g,box(0.46,1.0,0.46,C.stoneW),1.3,3.9,-0.5);
     for(let i=-3;i<=3;i++){ if(Math.abs(i)<1)continue; put(g,box(0.85,0.6,0.5,C.hedge),i*0.95,0.3,3.2); }
+    // 生垣にも花を少し
+    for(let i=0;i<6;i++){ const hx=(i-2.5)*0.55, cols=[0xE8845E,0xF3D06A,0xE8A0BE,0xFFFFFF];
+      put(g,sph(0.045,cols[i%cols.length],8),hx,0.58,3.42); }
     put(g,cyl(0.09,0.09,1.2,C.stoneW,14),-0.9,0.6,3.2);
     put(g,cyl(0.09,0.09,1.2,C.stoneW,14),0.9,0.6,3.2);
     put(g,box(2.1,0.14,0.14,C.stoneW),0,1.25,3.2);
@@ -507,7 +757,7 @@ function buildHouse(idx){
 }
 function setHouse(idx,animate){
   if(houseGroup) world.remove(houseGroup);
-  houseGroup=buildHouse(idx); world.add(houseGroup); setEnv(idx);
+  houseGroup=buildHouse(idx); world.add(houseGroup); setEnv(idx); applyWindowGlow();
   if(animate){houseGroup.scale.set(0.01,0.01,0.01);pops.push({o:houseGroup,t:0});}
 }
 setHouse(stageIdx,false);
@@ -555,7 +805,7 @@ put(bodyPivot,haramaki,0,0.52,0.01);
 function updateHaramaki(idx){ haramaki.material.color.setHex(HARAMAKI_COLORS[Math.min(idx,HARAMAKI_COLORS.length-1)]); }
 
 const head=sph(0.36,C.skin,64); head.scale.set(1,0.95,0.96);
-head.material=new THREE.MeshPhongMaterial({color:C.skin,specular:0xFFF0DC,shininess:60});
+head.material=new THREE.MeshPhongMaterial({color:C.skin,specular:0x332A22,shininess:14}); // 反射を弱め、常時のテカりを抑える
 put(headPivot,head,0,0.26,0);
 const hairL=sph(0.19,0x6B5B4E,32); hairL.scale.set(0.5,0.6,0.9); put(headPivot,hairL,-0.33,0.16,0);
 const hairR=sph(0.19,0x6B5B4E,32); hairR.scale.set(0.5,0.6,0.9); put(headPivot,hairR,0.33,0.16,0);
@@ -597,10 +847,10 @@ const sweatDrops=SWEAT_SPOTS.map(spot=>{
 });
 
 function arm(sx){
-  // 肩はお腹の球の外側にはっきり出す（球だけ胴に食い込ませて繋ぎ、円柱本体は胴に触れない位置に）
-  const up=new THREE.Group(); up.position.set(sx*0.58,0.80,0.05); bodyPivot.add(up);
-  put(up,sph(0.15,C.skin,28),0,0,0); // 肩：円柱の断面を隠し、胴となだらかに繋ぐ
-  put(up,cyl(0.095,0.085,0.30,C.skin,32),0,-0.15,0);
+  // 肩は胴のふくらみに半分埋め込み、上腕の付け根を同じ半径から生やすことで段差を消す
+  const up=new THREE.Group(); up.position.set(sx*0.52,0.80,0.05); bodyPivot.add(up);
+  put(up,sph(0.115,C.skin,32),0,0,0);                  // 肩：胴に埋め込む側の断面を隠すだけの大きさに縮小
+  put(up,cyl(0.115,0.082,0.30,C.skin,32),0,-0.15,0);   // 上腕：肩と同じ半径から滑らかに細くなる（段差ゼロ）
   put(up,sph(0.095,C.skin,32),0,-0.30,0);
   const fore=new THREE.Group(); fore.position.y=-0.30; up.add(fore);
   put(fore,cyl(0.082,0.075,0.26,C.skin,32),0,-0.13,0);
@@ -752,7 +1002,7 @@ function sayIdle(){ sayLine(pickIdleLine()); }
 function setLv(n){
   lv=n;
   document.getElementById('chipDay').textContent=DAYS[n];
-  if(state==='IDLE'&&decayLv===0) sayIdle();
+  if(state==='IDLE'&&decayLv===0&&!uiEl.classList.contains('intro')) sayIdle();
 }
 // 関係プレビューの切替は本番UIには出さず、家の名前の長押しに隠しておく（開発・プレゼン用）
 (function(){
@@ -766,17 +1016,39 @@ function setLv(n){
   el.addEventListener('pointercancel',cancel);
 })();
 
-// ===== 時間の提案 =====
-const lenSegEl=document.getElementById('lenSeg');
-function refreshLenSuggestion(){
-  const sug=suggestedMinutes();
-  SESSION_MIN=sug; SESSION_SEC=SESSION_MIN*DEMO_SEC_PER_MIN;
-  document.querySelectorAll('#lenSeg button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.min===sug));
+// ===== 時間選択画面：スライダー・おすすめマーカー・タグ =====
+// 初期値は前回選んだ時間（store.lastSessionMin）。おすすめ(suggestedMinutes)は
+// マーカーとしてのみ示し、初期値やスライダー操作を上書きしない。
+const pickSlider=document.getElementById('pickSlider'), pickTime=document.getElementById('pickTime'),
+      pickTotal=document.getElementById('pickTotal'), pickSugDot=document.getElementById('pickSugDot'),
+      pickTagsEl=document.getElementById('pickTags'), sayTextPick=document.getElementById('sayTextPick');
+let sessionTag='勉強';
+function minToClock(min){ return String(Math.floor(min/60)).padStart(2,'0')+':'+String(min%60).padStart(2,'0'); }
+function refreshLenSuggestion(){ /* 互換用：呼び出し元は残すが、初期値の上書きはしない */ }
+function updatePickDisplay(){
+  const min=+pickSlider.value;
+  pickTime.textContent=minToClock(min);
+  pickTotal.textContent='合計: '+min+' 分 ・ ¥'+ (min*YEN_PER_MIN).toLocaleString('ja-JP') + ' 予定';
 }
-lenSegEl.addEventListener('click',e=>{
-  const b=e.target.closest('button'); if(!b||state!=='IDLE') return;
-  SESSION_MIN=+b.dataset.min; SESSION_SEC=SESSION_MIN*DEMO_SEC_PER_MIN;
-  document.querySelectorAll('#lenSeg button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+function placeSugDot(){
+  const sug=suggestedMinutes();
+  const pct=(sug-5)/(120-5)*100;
+  pickSugDot.style.left=pct+'%';
+}
+function openPickScreen(){
+  pickSlider.value=SESSION_MIN; // 前回選んだ時間（起動時に store から反映済み）
+  updatePickDisplay(); placeSugDot();
+  sayTextPick.textContent = suggestedMinutes()<SESSION_MIN
+    ? '今日はそれよりちょい短めでもええんちゃう。' : '今日はそれくらいがええんちゃう。';
+}
+pickSlider.addEventListener('input',()=>{
+  SESSION_MIN=+pickSlider.value; SESSION_SEC=SESSION_MIN*DEMO_SEC_PER_MIN;
+  updatePickDisplay();
+});
+pickTagsEl.addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  sessionTag=b.dataset.tag;
+  document.querySelectorAll('#pickTags button').forEach(x=>x.setAttribute('aria-pressed',x===b));
 });
 
 // ===== 作業後フィードバック（毎回）：答えに対しておじさんが一言返す =====
@@ -913,6 +1185,8 @@ let nextClickT=0;
 
 // ===== カメラ：待機は広く、作業中はおじさんへ3/4アングルでズーム =====
 const CAM_IDLE ={az:Math.PI*0.5,        el:0.60, zoom:1.0, lx:0,   ly:1.0, lz:0.9};
+const CAM_GREET={az:Math.PI*0.5-0.22,   el:0.30, zoom:2.9, lx:0.1, ly:0.95,lz:3.0};
+const CAM_PICK ={az:Math.PI*0.5-0.30,   el:0.46, zoom:1.75,lx:0.15,ly:0.95,lz:2.5};
 const CAM_FOCUS={az:Math.PI*0.5-0.55,   el:0.38, zoom:2.35,lx:0.05,ly:0.75,lz:2.0};
 let camTween=null;
 function startCamTween(to,dur){ camTween={t:0,dur:dur||0.75,from:{az,el,zoom,lx:lookX,ly:lookY,lz:lookZ},to}; }
@@ -921,14 +1195,26 @@ const lerp=(a,b,k)=>a+(b-a)*k;
 // ===== 状態機械 =====
 const bStart=document.getElementById('bStart');
 const uiEl=document.getElementById('ui');
+const backBtn=document.getElementById('backBtn');
+const bPickStart=document.getElementById('bPickStart');
 const gaugeFg=document.getElementById('gaugeFg'),gaugeTime=document.getElementById('gaugeTime');
 const focusGaugeEl=document.getElementById('focusGauge'),focusMenuEl=document.getElementById('focusMenu');
 const bPauseToggle=document.getElementById('bPauseToggle'),bQuit=document.getElementById('bQuit');
+const holdRingEl=bQuit.querySelector('.holdRing');
 const GP=4*88-8*18+2*Math.PI*18; gaugeFg.style.strokeDasharray=GP; // 角丸正方形の周長
+
+// ===== 画面ルーター（HOME → PICK → FOCUS）=====
+// state（IDLE/FOCUS/NUDGE/PAUSED）とは別軸。setState は3Dのおじさんの挙動、
+// setScreen は2D UIの表示切替だけを担当する。
+function setScreen(s){
+  uiScreen=s;
+  uiEl.classList.remove('screen-home','screen-pick','screen-focus');
+  uiEl.classList.add('screen-'+s.toLowerCase());
+  backBtn.style.display=(s==='PICK')?'flex':'none';
+  focusGaugeEl.classList.remove('open');
+}
 function setButtons(){
-  const busy=(state==='FOCUS'||state==='NUDGE'||state==='PAUSED');
-  uiEl.classList.toggle('busy',busy);
-  bStart.disabled=busy;
+  bStart.disabled=(state!=='IDLE');
   focusGaugeEl.classList.toggle('paused',state==='PAUSED');
   bPauseToggle.textContent=state==='PAUSED'?'再開':'一時停止';
 }
@@ -939,37 +1225,119 @@ function setState(s){
   if(s==='NUDGE'){resetDecay();}
   if(s==='IDLE'){waitT=1.0;newWaypoint();resetDecay();}
 }
+
+// HOME → PICK：時間選択画面へ。おじさんを手前へ呼び、こちらを見て待たせる
+const GREET_POS=new THREE.Vector3(0.4,0,2.9);
+bStart.onclick=()=>{
+  if(state!=='IDLE') return;
+  setScreen('PICK'); openPickScreen();
+  act=null; waitT=0; wp.copy(GREET_POS); // 手前へ歩かせる（wander再開は下のガードで止める）
+  startCamTween(CAM_PICK);
+};
+backBtn.onclick=()=>{
+  if(uiScreen!=='PICK') return;
+  setScreen('HOME'); waitT=1.0; newWaypoint();
+  startCamTween(CAM_IDLE);
+};
+
+// PICK → FOCUS：時間を確定してセッション開始
+bPickStart.onclick=()=>{
+  if(uiScreen!=='PICK') return;
+  store.lastSessionMin=SESSION_MIN; saveStore();
+  setScreen('FOCUS');
+  startSession();
+};
 function startSession(){
   sTime=0;setState('FOCUS');say('start');
   startCamTween(CAM_FOCUS); startMusic();
-  focusMenuEl.classList.remove('open');
+  focusGaugeEl.classList.remove('open');
 }
 function endSession(ok){
   const min=ok?SESSION_MIN:Math.max(1,Math.round(sTime/SESSION_SEC*SESSION_MIN));
-  addMoney(min); addLog(min,ok);
+  addMoney(min); addLog(min,ok,sessionTag);
   recordSessionOutcome(ok,min);
   if(ok){ clearNeglect(); fireSparkle(); }
-  setState('IDLE');
+  setState('IDLE'); setScreen('HOME');
   startCamTween(CAM_IDLE); stopMusic();
-  focusMenuEl.classList.remove('open');
+  focusGaugeEl.classList.remove('open');
   sayLine(ok?pickDoneLine():pickStopLine());
   if(ok) nodT=0; else headUp=-0.32;
-  if(shouldAskDayQuestion()) showDayQuestion();
+  if(shouldAskDayQuestion(ok)) showDayQuestion();
 }
-bStart.onclick=()=>{if(state==='IDLE')startSession();};
 
 // ゲージをタップ：一時停止/再開とやめるのメニューを開閉
-focusGaugeEl.addEventListener('click',()=>{ focusMenuEl.classList.toggle('open'); });
-bPauseToggle.onclick=()=>{
+focusGaugeEl.addEventListener('click',e=>{ e.stopPropagation(); focusGaugeEl.classList.toggle('open'); });
+// メニュー外をタップしたら閉じる
+uiEl.addEventListener('pointerdown',e=>{
+  if(!focusGaugeEl.classList.contains('open')) return;
+  if(focusGaugeEl.contains(e.target)) return;
+  focusGaugeEl.classList.remove('open');
+});
+bPauseToggle.onclick=(e)=>{
+  e.stopPropagation();
   if(state==='FOCUS'||state==='NUDGE'){ setState('PAUSED'); stopMusic(); }
   else if(state==='PAUSED'){ setState('FOCUS'); startMusic(); }
-  focusMenuEl.classList.remove('open');
+  focusGaugeEl.classList.remove('open');
 };
-bQuit.onclick=()=>{ if(state==='FOCUS'||state==='NUDGE'||state==='PAUSED') endSession(false); };
+
+// ===== やめる：長押し（1.4秒）でのみ確定。押している間、おじさんがこちらを向いて確認する =====
+const QUIT_HOLD_MS=1400;
+let quitHoldStart=0, quitHoldRAF=null;
+function quitConfirmLine(){
+  const t=closenessTier();
+  if(t>=2) return 'ええけど。ほんまに？';
+  if(t>=1) return 'ほんまにやめるん？';
+  return '……ほんまにやめます？';
+}
+function quitHoldStep(){
+  if(!confirmingQuit) return;
+  const el=Math.min(1,(performance.now()-quitHoldStart)/QUIT_HOLD_MS);
+  holdRingEl.style.setProperty('--hold',(el*100).toFixed(1));
+  if(el>=1){ quitHoldCancel(false); endSession(false); return; }
+  quitHoldRAF=requestAnimationFrame(quitHoldStep);
+}
+function quitHoldBegin(){
+  if(!(state==='FOCUS'||state==='NUDGE'||state==='PAUSED')) return;
+  confirmingQuit=true; quitHoldStart=performance.now();
+  sayBox.classList.add('show-confirm');
+  sayRaw(quitConfirmLine());
+  if(quitHoldRAF) cancelAnimationFrame(quitHoldRAF);
+  quitHoldRAF=requestAnimationFrame(quitHoldStep);
+}
+function quitHoldCancel(fade){
+  confirmingQuit=false;
+  holdRingEl.style.setProperty('--hold',0);
+  if(quitHoldRAF){ cancelAnimationFrame(quitHoldRAF); quitHoldRAF=null; }
+  if(fade!==false) sayBox.classList.remove('show-confirm');
+}
+bQuit.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); bQuit.setPointerCapture(e.pointerId); quitHoldBegin(); });
+bQuit.addEventListener('pointerup',()=>quitHoldCancel());
+bQuit.addEventListener('pointercancel',()=>quitHoldCancel());
+bQuit.addEventListener('pointerleave',()=>quitHoldCancel());
+bQuit.addEventListener('click',e=>{ e.stopPropagation(); }); // タップの度にゲージが開閉トグルされるのを防ぐ
+
+const raycaster=new THREE.Raycaster();
+// 家をタップ：情報カード（所持金・進捗・記録）を出す。常設せず、見たいときだけ。
+const topRowEl=document.getElementById('topRow'), tapHintEl=document.getElementById('tapHint');
+function toggleInfo(force){
+  const open=(force!==undefined)?force:!topRowEl.classList.contains('open');
+  topRowEl.classList.toggle('open',open);
+  if(open) tapHintEl.classList.remove('show');
+}
+function tryHouseTap(clientX,clientY){
+  if(uiScreen!=='HOME'||!houseGroup) return false;
+  const rect=cv.getBoundingClientRect();
+  const ndc=new THREE.Vector2(((clientX-rect.left)/rect.width)*2-1, -((clientY-rect.top)/rect.height)*2+1);
+  raycaster.setFromCamera(ndc,camera);
+  if(raycaster.intersectObject(houseGroup,true).length){ toggleInfo(); return true; }
+  toggleInfo(false); // 家以外をタップしたら閉じる
+  return false;
+}
 
 // おじさんをタップ：スマホに逃げるデモ演出（本番は放置時間から自動検知する想定の仮トリガー）
-const raycaster=new THREE.Raycaster();
 function tryNudgeTap(clientX,clientY){
+  if(uiScreen==='HOME'){ tryHouseTap(clientX,clientY); return; }
+  if(uiScreen!=='FOCUS') return;
   if(state!=='FOCUS'&&state!=='NUDGE') return;
   const rect=cv.getBoundingClientRect();
   const ndc=new THREE.Vector2(((clientX-rect.left)/rect.width)*2-1, -((clientY-rect.top)/rect.height)*2+1);
@@ -982,12 +1350,12 @@ function tryNudgeTap(clientX,clientY){
 }
 
 const logList=document.getElementById('logList'); let recN=0;
-function addLog(min,ok){
+function addLog(min,ok,tag){
   if(recN===0)logList.innerHTML='';
   recN++;
   const d=document.createElement('span');
   d.className='rec '+(ok?'ok':'ng');
-  d.textContent=min+'分 '+(ok?'完了':'中断');
+  d.textContent=min+'分'+(tag?' '+tag:'')+' '+(ok?'完了':'中断');
   logList.prepend(d);
   while(logList.children.length>7) logList.removeChild(logList.lastChild);
 }
@@ -998,13 +1366,43 @@ updateHaramaki(stageIdx);
 applyNeglect(visitAbsence);
 refreshLenSuggestion();
 hideDayQuestion();
-setLv(1); setButtons(); sayIdle(); updHUD();
+setScreen('HOME');
+setLv(1); setButtons(); updHUD();
+
+// ===== 起動演出：まずおじさんに寄って、こちらに気づかせる =====
+// 残高ではなく「不在をどう過ごしていたか」から画面を始める。
+function greetLine(){
+  const d=visitAbsence;
+  if(d>=4) return 'お……ひさしぶりやん。もう来えへんかと思たわ。';
+  if(d>=2) return 'おお、'+d+'日ぶりか。まあ、ぼちぼちやっとったで。';
+  if(isLateNight()) return 'こんな時間か。まあ、来たなら来たでええけど。';
+  if(curWeather==='rain') return '雨やなあ。こういう日はやる気出えへんわ。';
+  if(curPhase==='dawn') return '朝からえらいな。……こっちはまだ眠いわ。';
+  if(curPhase==='night') return 'お、来たな。夜はこっからやろ。';
+  return pickIdleLine();
+}
+function runIntro(){
+  uiEl.classList.add('intro');
+  // 導入はおじさんに寄った画。歩き回らせず、こちらを向かせる
+  waitT=99; act=null;
+  az=CAM_GREET.az; el=CAM_GREET.el; zoom=CAM_GREET.zoom;
+  lookX=CAM_GREET.lx; lookY=CAM_GREET.ly; lookZ=CAM_GREET.lz; updCam();
+  setTimeout(()=>{ sayLine(greetLine()); nodT=0; }, 550);
+  setTimeout(()=>{                       // 引いて家全体を見せる
+    startCamTween(CAM_IDLE,1.5);
+    uiEl.classList.remove('intro');
+    waitT=1.2; newWaypoint();
+  }, 2300);
+  setTimeout(()=>{ tapHintEl.classList.add('show');
+    setTimeout(()=>tapHintEl.classList.remove('show'),4200); }, 4200);
+}
+runIntro();
 const clock=new THREE.Clock();
 function tick(){
   const dt=Math.min(0.05,clock.getDelta()), t=clock.elapsedTime;
   poseT+=dt;
 
-  if(state==='FOCUS'){
+  if(state==='FOCUS'&&!confirmingQuit){
     sTime+=dt;
     const p=Math.min(1,sTime/SESSION_SEC);
     gaugeFg.style.strokeDashoffset=GP*(1-p);
@@ -1024,8 +1422,8 @@ function tick(){
     updCam();
     if(k>=1) camTween=null;
   }
-  if(state==='IDLE'||state==='NUDGE'){
-    decayT+=dt*(state==='NUDGE'?4:1);
+  if(!confirmingQuit&&(state==='IDLE'||state==='NUDGE'||state==='PAUSED')){
+    decayT+=dt*(state==='NUDGE'?4:state==='PAUSED'?0.3:1);
     for(let i=SLACK.length-1;i>=0;i--){
       if(decayT>=SLACK[i].at&&decayLv<i+1){decayLv=i+1;sayRaw(SLACK[i].line);act=null;break;}
     }
@@ -1035,7 +1433,7 @@ function tick(){
   chips.visible=decayLv>=6;
 
   const dx=wp.x-man.position.x, dz=wp.z-man.position.z, d2=Math.hypot(dx,dz);
-  if(decayLv>=1) waitT=99;
+  if(confirmingQuit||decayLv>=1) waitT=99;
   if(waitT>0){
     waitT-=dt; walking=false;
     if(act){ actT+=dt; if(actT>actDur) act=null; }
@@ -1047,13 +1445,14 @@ function tick(){
     yawTarget=Math.atan2(dx,dz);
   } else {
     walking=false;
-    if(state==='IDLE'&&decayLv===0){waitT=3.0+Math.random()*3.0;newWaypoint();pickAct();}
+    if(state==='IDLE'&&decayLv===0&&uiScreen!=='PICK'){waitT=3.0+Math.random()*3.0;newWaypoint();pickAct();}
   }
 
   const atDesk=(state==='FOCUS')&&!walking&&d2<=0.3&&decayLv===0;
   sitAmt+=(((atDesk||decayLv===5)?1:0)-sitAmt)*Math.min(1,dt*4);
   lieAmt+=(((decayLv>=6)?1:0)-lieAmt)*Math.min(1,dt*2.5);
-  if(decayLv>=1||atDesk) yawTarget=0;
+  const introing=uiEl.classList.contains('intro');
+  if(confirmingQuit||decayLv>=1||atDesk||introing||(uiScreen==='PICK'&&!walking)) yawTarget=0;
   let dy=yawTarget-man.rotation.y;
   while(dy>Math.PI)dy-=Math.PI*2; while(dy<-Math.PI)dy+=Math.PI*2;
   man.rotation.y+=dy*Math.min(1,dt*5);
@@ -1067,7 +1466,10 @@ function tick(){
   let Lz=0.26, Rz=-0.26, Lf=-0.25, Rf=-0.25, k=6;
   mouth.scale.set(1,1,1);
 
-  if(atDesk&&state==='FOCUS'){
+  if(confirmingQuit){
+    // 手を止めてこちらを向く。責める素振りはさせない（腕は力を抜いた自然な位置）
+    Lx=-0.30; Rx=-0.30; Lz=0.20; Rz=-0.20; Lf=-0.30; Rf=-0.30; hx=-0.03+Math.sin(t*1.6)*0.02; k=8;
+  } else if(atDesk&&state==='FOCUS'){
     // 二段折り：上腕はほぼ垂直のまま、肘を深く曲げて前腕だけを机の上に伸ばす
     const tap=Math.sin(poseT*13)*0.14, tap2=Math.sin(poseT*13+1.9)*0.14;
     Lx=-0.30+tap*0.3; Rx=-0.30+tap2*0.3; Lz=0.28; Rz=-0.28; Lf=-1.65+tap; Rf=-1.65+tap2;
@@ -1137,7 +1539,7 @@ function tick(){
   headPivot.rotation.x+=(hx-headPivot.rotation.x)*Math.min(1,dt*6);
   headPivot.rotation.y+=(hy-headPivot.rotation.y)*Math.min(1,dt*6);
 
-  const lit=(state==='FOCUS'&&atDesk);
+  const lit=(state==='FOCUS'&&atDesk&&!confirmingQuit);
   screen.material.color.setHex(lit?C.glassLit:C.glass);
   screenLight.position.set(man.position.x+0.2,0.62,man.position.z+0.55);
   screenLight.intensity+=((lit?0.8+Math.sin(t*9)*0.05:0)-screenLight.intensity)*Math.min(1,dt*6);
@@ -1167,7 +1569,7 @@ function tick(){
   if(sparkleT>=0){
     sparkleT+=dt;
     const dur=1.1, flash=sparkleT<dur?Math.sin((sparkleT/dur)*Math.PI):0;
-    sparkleMat.opacity=flash*0.95;
+    sparkleMat.opacity=flash*0.55; // 反射を抑えめに（以前は0.95で眩しすぎた）
     sparkle.scale.setScalar(0.5+flash*0.9);
     sparkle.rotation.z=sparkleT*3;
     if(sparkleT>dur) sparkleT=-1;
@@ -1190,6 +1592,13 @@ function tick(){
       d.m.opacity=0;
     }
   });
+
+  if(rainGroup.visible){
+    rainDrops.forEach(d=>{
+      d.m.position.y-=d.sp*dt;
+      if(d.m.position.y<-0.5){ d.m.position.y=rnd(10,15); d.m.position.x=rnd(-13,13); d.m.position.z=rnd(-13,13); }
+    });
+  }
 
   for(let i=pops.length-1;i>=0;i--){
     const p=pops[i]; p.t+=dt;

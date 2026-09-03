@@ -40,23 +40,29 @@
   .rec.ok{background:#E2FBF2;color:#1B8A6C}
   .rec.ng{background:#FFEFE9;color:#C4633F}
   #logEmpty{font-size:9.5px;color:var(--ink-soft)}
-  #timer{padding:7px 10px;display:flex;align-items:center;gap:8px;opacity:.25;transition:opacity .25s}
-  #timer.on{opacity:1}
-  #timer.pause{opacity:.45}
-  #ring{width:28px;height:28px;flex:none}
-  #ring circle{fill:none;stroke-width:5;stroke-linecap:round}
-  #ringBg{stroke:#EFE9E0}#ringFg{stroke:var(--mint);transition:stroke-dashoffset .25s linear}
-  #tLeft{font-size:13.5px;font-weight:700;font-variant-numeric:tabular-nums}
-  #rel,#lenPick{display:flex;align-items:center;gap:8px;padding:6px 9px}
-  #rel h3,#lenPick h3{margin:0;font-size:10px;font-weight:700;color:var(--ink-soft);white-space:nowrap}
-  #relNote{display:block;font-size:8.5px;font-weight:700;color:#C2A76A;margin-top:1px}
+  #ui.busy .idle-only{display:none!important}
+  #focusGauge{display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    flex-direction:column;align-items:center;gap:8px;pointer-events:auto;cursor:pointer;
+    background:none;box-shadow:none;padding:0}
+  #ui.busy #focusGauge{display:flex}
+  #gaugeSvg{width:34vw;max-width:180px;min-width:120px}
+  #gaugeSvg rect{fill:none;stroke-width:7;stroke-linecap:round;paint-order:stroke}
+  #gaugeBg{stroke:rgba(255,255,255,.4)}
+  #gaugeFg{stroke:var(--mint);transition:stroke-dashoffset .25s linear}
+  #focusGauge.paused #gaugeFg{stroke:var(--sun)}
+  #gaugeTime{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;color:#fff;
+    text-shadow:0 2px 6px rgba(0,0,0,.35);letter-spacing:.02em}
+  #focusMenu{display:none;position:absolute;left:50%;top:calc(50% + 26vw);transform:translateX(-50%);
+    max-width:min(70vw,240px);flex-direction:column;gap:6px;pointer-events:auto;z-index:6}
+  #focusMenu.open{display:flex}
+  #lenPick{display:flex;align-items:center;gap:8px;padding:6px 9px}
+  #lenPick h3{margin:0;font-size:10px;font-weight:700;color:var(--ink-soft);white-space:nowrap}
+  #stageName{cursor:pointer;-webkit-user-select:none;user-select:none}
   .seg{display:flex;background:#F3EFE8;border-radius:11px;padding:2px;gap:2px;flex:1}
   .seg button{flex:1;border:0;background:transparent;border-radius:9px;padding:5px 0;font-family:inherit;
     font-weight:700;font-size:11px;color:var(--ink-soft);cursor:pointer;transition:.16s}
   .seg button[aria-pressed="true"]{background:var(--sun);color:#6B4A00;box-shadow:0 2px 0 rgba(180,130,10,.28)}
   #say{position:relative;padding:9px 13px;min-height:44px;display:flex;align-items:center}
-  #say::after{content:"";position:absolute;left:24px;bottom:-7px;width:14px;height:14px;
-    background:var(--card);border-radius:3px;transform:rotate(45deg)}
   #sayName{display:inline-block;font-size:9.5px;font-weight:700;color:#B24E30;background:#FFE7DE;
     padding:2px 8px;border-radius:999px;margin-bottom:3px}
   #sayText{font-size:13px;line-height:1.45}
@@ -86,9 +92,9 @@
   <div id="stage"></div>
   <div id="coin"></div>
   <div id="ui">
-    <div id="topRow">
+    <div id="topRow" class="idle-only">
       <div class="card" id="home">
-        <div id="stageName">ボロアパート</div>
+        <div id="stageName" title="長押しで関係のプレビューを切替">ボロアパート</div>
         <div id="chips">
           <span class="chip" id="chipMoney">¥0</span>
           <span class="chip b" id="chipDay">10日目</span>
@@ -98,21 +104,9 @@
         <div id="barNote">次の家まで あと ¥24,000</div>
         <div id="logList"><span id="logEmpty">終えた分も、途中でやめた分も残ります。</span></div>
       </div>
-      <div class="card" id="timer">
-        <svg id="ring" viewBox="0 0 40 40"><circle id="ringBg" cx="20" cy="20" r="16"/><circle id="ringFg" cx="20" cy="20" r="16" transform="rotate(-90 20 20)"/></svg>
-        <div id="tLeft">50:00</div>
-      </div>
-    </div>
-    <div class="card" id="rel">
-      <h3>関係<span id="relNote">プレビュー用</span></h3>
-      <div class="seg" id="relSeg">
-        <button data-lv="0" aria-pressed="false">初日</button>
-        <button data-lv="1" aria-pressed="true">10日</button>
-        <button data-lv="2" aria-pressed="false">30日</button>
-      </div>
     </div>
     <div class="spacer"></div>
-    <div class="card" id="lenPick">
+    <div class="card idle-only" id="lenPick">
       <h3>時間</h3>
       <div class="seg" id="lenSeg">
         <button data-min="15" aria-pressed="false">15分</button>
@@ -120,19 +114,27 @@
         <button data-min="50" aria-pressed="true">50分</button>
       </div>
     </div>
-    <div class="card" id="say"><div><div id="sayName">おじさん</div><div id="sayText">お、来たな。今日どうする？</div></div></div>
-    <div id="ctrl">
+    <div class="card idle-only" id="say"><div><div id="sayName">おじさん</div><div id="sayText">お、来たな。今日どうする？</div></div></div>
+    <div id="ctrl" class="idle-only">
       <button class="btn primary" id="bStart">一緒に始める</button>
-      <button class="btn sky" id="bPhone" disabled>スマホを触る</button>
-      <button class="btn plain" id="bStop" disabled>やめる</button>
-      <button class="btn plain" id="bSkip">早送り</button>
     </div>
-    <div class="card" id="dayQ" hidden>
+    <div class="card idle-only" id="dayQ" hidden>
       <div id="dqText">今日の調子はどうやった？</div>
       <div id="dqBtns">
         <button class="btn plain" id="dqTough">しんどかった</button>
         <button class="btn sky" id="dqOk">いけた</button>
       </div>
+    </div>
+    <div id="focusGauge">
+      <svg id="gaugeSvg" viewBox="0 0 100 100">
+        <rect id="gaugeBg" x="6" y="6" width="88" height="88" rx="18"/>
+        <rect id="gaugeFg" x="6" y="6" width="88" height="88" rx="18"/>
+      </svg>
+      <div id="gaugeTime">50:00</div>
+    </div>
+    <div id="focusMenu">
+      <button class="btn sky" id="bPauseToggle">一時停止</button>
+      <button class="btn plain" id="bQuit">やめる</button>
     </div>
   </div>
 </div>
@@ -219,7 +221,7 @@ function suggestedMinutes(){
   if(tt===1) return 30;
   return 50;
 }
-function shouldAskDayQuestion(){ return store.lastQuestionDay!==todayStr(); }
+function shouldAskDayQuestion(){ return true; } // 作業後は毎回聞く
 function answerDayQuestion(a){
   store.todayAnswer=a; store.lastQuestionDay=todayStr(); saveStore();
   refreshLenSuggestion();
@@ -258,7 +260,7 @@ const C={
   grass:0x74A551, dirt:0x7E7568, dirtDry:0x8C8474, soil:0xA98863,
   cobble:0x9A9B96, cobbleD:0x82837E, cobbleGrime:0x6E6A61, puddle:0x4E5652,
   leaf:0x4E8B43, leafD:0x3E7038, leafDead:0x7C6F4E, trunk:0x8A6444, trunkDead:0x6B5B48,
-  skin:0xE8BE96, skinD:0xD0A379, shirt:0xEDE7DA, pants:0x5E6E82,
+  skin:0xE8BE96, skinD:0xD0A379, shirt:0xF3F0E8, pants:0xF1EEE4,
   wallOld:0x9B9082, roofOld:0x6E675C, rust:0x8A6B4E, woodOld:0x86735C,
   wallNew:0xDFD2B6, roofNew:0xB0705A, roofTile:0x7E93A6, wood:0xB4906A,
   glass:0x8FB6BE, glassLit:0xCFE6A0, hedge:0x4C8542, stoneW:0xBFB6A4,
@@ -311,7 +313,7 @@ function buildEnv(idx){
   updateSky(idx);
 
   if(slum){
-    for(let i=0;i<46;i++){
+    for(let i=0;i<24;i++){
       const a=Math.random()*6.28, r=Math.sqrt(Math.random())*9.5;
       const cols=[C.cobble,C.cobbleD,C.cobbleGrime,C.dirtDry];
       const t=box(rnd(0.8,1.5),0.09,rnd(0.7,1.2),cols[(Math.random()*cols.length)|0]);
@@ -319,12 +321,12 @@ function buildEnv(idx){
       t.rotation.y=Math.random()*3.14; t.rotation.z=rnd(-0.04,0.04);
       t.castShadow=false; g.add(t);
     }
-    for(let i=0;i<4;i++){
+    for(let i=0;i<2;i++){
       const a=Math.random()*6.28,r=rnd(2.5,8);
       const p=cyl(rnd(0.6,1.1),rnd(0.6,1.1),0.03,C.puddle,20); p.castShadow=false;
       put(g,p,Math.cos(a)*r,0.06,Math.sin(a)*r);
     }
-    for(let i=0;i<10;i++){
+    for(let i=0;i<4;i++){
       const a=Math.random()*6.28,r=rnd(2.5,9);
       const kind=(Math.random()*3)|0;
       const m=kind===0?box(rnd(0.16,0.28),0.1,rnd(0.12,0.2),C.trash)
@@ -339,10 +341,6 @@ function buildEnv(idx){
       if(Math.random()<0.35) continue;
       const p=cyl(0.06,0.06,rnd(0.5,0.9),C.woodOld,10); p.rotation.z=rnd(-0.25,0.25);
       put(g,p,i*1.0-0.4,0.35,5.8);
-    }
-    for(let i=0;i<14;i++){
-      const a=Math.random()*6.28,r=rnd(3,10);
-      put(g,cone(0.1,rnd(0.22,0.4),0x8A8058,6),Math.cos(a)*r,0.17,Math.sin(a)*r);
     }
 
     // 廃ビルの躯体：鉄骨がむき出しの床スラブ、抜けた階もある
@@ -375,13 +373,6 @@ function buildEnv(idx){
     }
     wreckCar(5.0,3.4,0.5,C.rust);
     wreckCar(5.8,2.6,-0.3,0x8A5A52);
-    const bus=new THREE.Group();
-    put(bus,box(2.6,1.0,0.95,0xC7A93B),0,0.85,0);
-    put(bus,box(2.5,0.32,0.9,0xB89A3A),0,1.35,0);
-    for(let i=-1;i<=1;i++) put(bus,box(0.4,0.32,0.06,C.glass),i*0.75,1.0,0.49);
-    [[-0.95,-0.5],[0.95,-0.5],[-0.95,0.5],[0.95,0.5]].forEach(w=>{const wh=cyl(0.22,0.22,0.14,0x2B2723,12);wh.rotation.z=Math.PI/2;put(bus,wh,w[0],0.22,w[1]);});
-    bus.position.set(-2.0,0,5.2); bus.rotation.y=0.12;
-    g.add(bus);
 
     // 傾いた標識
     const sign=new THREE.Group();
@@ -522,12 +513,11 @@ function setHouse(idx,animate){
 setHouse(stageIdx,false);
 
 // ===== ちゃぶ台（体と干渉しない位置に）=====
-const desk=new THREE.Group(); desk.position.set(0,0,2.48); world.add(desk);
+const desk=new THREE.Group(); desk.position.set(0,0,2.60); world.add(desk);
 put(desk,box(1.3,0.06,0.55,C.wood),0,0.40,0);
 [[-0.54,-0.19],[0.54,-0.19],[-0.54,0.19],[0.54,0.19]].forEach(p=>put(desk,box(0.07,0.38,0.07,C.woodOld),p[0],0.2,p[1]));
-// ノートパソコンは斜めに置いて、蓋が手前をふさがないようにする
-const DESK_YAW=-0.42;
-const laptop=new THREE.Group(); laptop.position.set(0.26,0.43,0.0); laptop.rotation.y=DESK_YAW; desk.add(laptop);
+// ノートパソコンは体・机と平行に正面向き
+const laptop=new THREE.Group(); laptop.position.set(0.0,0.43,0.0); desk.add(laptop);
 put(laptop,box(0.56,0.025,0.34,0x8E949A),0,0,0);
 const lidPivot=new THREE.Group(); lidPivot.position.set(0,0.01,0.16); laptop.add(lidPivot);
 put(lidPivot,box(0.56,0.30,0.02,0x8E949A),0,0.15,0);
@@ -546,9 +536,20 @@ const bellyLow=sph(0.42,C.shirt,56); bellyLow.scale.set(1.0,0.72,0.9); put(bodyP
 put(bodyPivot,cyl(0.4,0.38,0.2,C.pants,48),0,0.24,0);
 put(bodyPivot,box(0.66,0.06,0.5,0x4A566A),0,0.33,0);
 
-// 腹巻：くすんだ生成りから始まり、家がグレードアップすると新調される
-const HARAMAKI_COLORS=[0xC9B79A,0xE3D5B8,0xEFE3C8,0xF3E9D2,0xF7F0DE];
-const haramaki=new THREE.Mesh(new THREE.TorusGeometry(0.40,0.085,20,48),new THREE.MeshLambertMaterial({color:HARAMAKI_COLORS[0]}));
+// 腹巻：画像参考の縦縞カーキ。くすんだ色から始まり、家がグレードアップすると新調される
+const HARAMAKI_COLORS=[0xADA079,0xBFB088,0xD3C49A,0xE3D5B0,0xF0E4C4];
+function makeStripeTexture(){
+  const cvs=document.createElement('canvas'); cvs.width=32; cvs.height=8;
+  const cx=cvs.getContext('2d');
+  cx.fillStyle='#fff'; cx.fillRect(0,0,32,8);
+  cx.fillStyle='rgba(0,0,0,0.22)';
+  for(let x=0;x<32;x+=8) cx.fillRect(x,0,2,8);
+  const tex=new THREE.CanvasTexture(cvs);
+  tex.wrapS=THREE.RepeatWrapping; tex.wrapT=THREE.RepeatWrapping; tex.repeat.set(14,1);
+  return tex;
+}
+const haramaki=new THREE.Mesh(new THREE.TorusGeometry(0.40,0.085,20,48),
+  new THREE.MeshLambertMaterial({color:HARAMAKI_COLORS[0],map:makeStripeTexture()}));
 haramaki.rotation.x=Math.PI/2; haramaki.scale.set(1,1,0.85); haramaki.castShadow=true; haramaki.receiveShadow=true;
 put(bodyPivot,haramaki,0,0.52,0.01);
 function updateHaramaki(idx){ haramaki.material.color.setHex(HARAMAKI_COLORS[Math.min(idx,HARAMAKI_COLORS.length-1)]); }
@@ -596,7 +597,8 @@ const sweatDrops=SWEAT_SPOTS.map(spot=>{
 });
 
 function arm(sx){
-  const up=new THREE.Group(); up.position.set(sx*0.48,0.79,0.05); bodyPivot.add(up);
+  const up=new THREE.Group(); up.position.set(sx*0.44,0.78,0.04); bodyPivot.add(up);
+  put(up,sph(0.115,C.skin,28),0,0,0); // 肩：円柱の断面を隠し、胴となだらかに繋ぐ
   put(up,cyl(0.095,0.085,0.30,C.skin,32),0,-0.15,0);
   put(up,sph(0.095,C.skin,32),0,-0.30,0);
   const fore=new THREE.Group(); fore.position.y=-0.30; up.add(fore);
@@ -655,9 +657,10 @@ function pickAct(){
 
 // ===== カメラ =====
 let az=Math.PI*0.5, el=0.60, dist=26, zoom=1;
+let lookX=0, lookY=1.0, lookZ=0.9;
 function updCam(){
   camera.position.set(Math.cos(az)*Math.cos(el)*dist,Math.sin(el)*dist,Math.sin(az)*Math.cos(el)*dist);
-  camera.lookAt(0,1.0,0.9);
+  camera.lookAt(lookX,lookY,lookZ);
   const f=FRUST/zoom;
   camera.left=-f*W/H/2;camera.right=f*W/H/2;camera.top=f/2;camera.bottom=-f/2;
   camera.updateProjectionMatrix();
@@ -666,16 +669,25 @@ function resize(){W=phone.clientWidth;H=phone.clientHeight;renderer.setSize(W,H)
 addEventListener('resize',resize); resize();
 const pts=new Map(); let pinch0=0,zoom0=1;
 const cv=renderer.domElement;
+let downPt=null, dragDist=0;
 cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pts.size===1){downPt={x:e.clientX,y:e.clientY};dragDist=0;}
   if(pts.size===2){const a=[...pts.values()];pinch0=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);zoom0=zoom;}});
 cv.addEventListener('pointermove',e=>{
   const p=pts.get(e.pointerId); if(!p) return;
-  if(pts.size===1){az-=(e.clientX-p.x)*0.008;el=Math.max(0.06,Math.min(1.38,el+(e.clientY-p.y)*0.005));updCam();hideDragHint();}
+  if(pts.size===1){
+    const ddx=e.clientX-p.x, ddy=e.clientY-p.y;
+    dragDist+=Math.hypot(ddx,ddy);
+    az-=ddx*0.008;el=Math.max(0.06,Math.min(1.38,el+ddy*0.005));updCam();hideDragHint();
+  }
   p.x=e.clientX;p.y=e.clientY;
   if(pts.size===2){const a=[...pts.values()];const d=Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y);
     if(pinch0>0){zoom=Math.max(0.55,Math.min(3.4,zoom0*d/pinch0));updCam();}}
 });
-function up(e){pts.delete(e.pointerId);if(pts.size<2)pinch0=0;}
+function up(e){
+  if(pts.size===1&&downPt&&dragDist<6) tryNudgeTap(e.clientX,e.clientY);
+  pts.delete(e.pointerId);if(pts.size<2)pinch0=0; downPt=null;
+}
 cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up);
 cv.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.max(0.55,Math.min(3.4,zoom*(e.deltaY>0?0.94:1.06)));updCam();hideDragHint();},{passive:false});
 let dragHintEl=null;
@@ -737,11 +749,20 @@ function sayIdle(){ sayLine(pickIdleLine()); }
 
 function setLv(n){
   lv=n;
-  document.querySelectorAll('#relSeg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.lv===String(n)));
   document.getElementById('chipDay').textContent=DAYS[n];
   if(state==='IDLE'&&decayLv===0) sayIdle();
 }
-document.getElementById('relSeg').addEventListener('click',e=>{const b=e.target.closest('button');if(b)setLv(+b.dataset.lv);});
+// 関係プレビューの切替は本番UIには出さず、家の名前の長押しに隠しておく（開発・プレゼン用）
+(function(){
+  const el=document.getElementById('stageName');
+  let pressT=null;
+  const start=()=>{ pressT=setTimeout(()=>{ setLv((lv+1)%3); pressT=null; },600); };
+  const cancel=()=>{ if(pressT){ clearTimeout(pressT); pressT=null; } };
+  el.addEventListener('pointerdown',start);
+  el.addEventListener('pointerup',cancel);
+  el.addEventListener('pointerleave',cancel);
+  el.addEventListener('pointercancel',cancel);
+})();
 
 // ===== 時間の提案 =====
 const lenSegEl=document.getElementById('lenSeg');
@@ -756,12 +777,15 @@ lenSegEl.addEventListener('click',e=>{
   document.querySelectorAll('#lenSeg button').forEach(x=>x.setAttribute('aria-pressed',x===b));
 });
 
-// ===== 一日一問（セッション後、1日1回だけ） =====
+// ===== 作業後フィードバック（毎回）：答えに対しておじさんが一言返す =====
 const dayQEl=document.getElementById('dayQ'), ctrlEl=document.getElementById('ctrl');
 function showDayQuestion(){ ctrlEl.hidden=true; dayQEl.hidden=false; }
 function hideDayQuestion(){ dayQEl.hidden=true; ctrlEl.hidden=false; }
-document.getElementById('dqTough').onclick=()=>{ answerDayQuestion('tough'); hideDayQuestion(); };
-document.getElementById('dqOk').onclick=()=>{ answerDayQuestion('ok'); hideDayQuestion(); };
+function reactToAnswer(a){
+  return a==='tough' ? 'そうか。次はもうちょい短めにしよか。' : 'ええやん、その調子や。';
+}
+document.getElementById('dqTough').onclick=()=>{ answerDayQuestion('tough'); sayLine(reactToAnswer('tough')); hideDayQuestion(); };
+document.getElementById('dqOk').onclick=()=>{ answerDayQuestion('ok'); sayLine(reactToAnswer('ok')); hideDayQuestion(); };
 
 // ===== 放置の跡（雑草）：資産は減らさず、見た目だけ変える =====
 let neglectGroup=null;
@@ -801,20 +825,69 @@ function addMoney(min){
   updHUD();
 }
 
+// ===== 音（コードで合成。外部音源は使わない） =====
+let audioCtx=null, master=null, droneOsc=[], windGainNode=null;
+function ensureAudio(){
+  if(audioCtx) return;
+  audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  master=audioCtx.createGain(); master.gain.value=0; master.connect(audioCtx.destination);
+  const bufSize=audioCtx.sampleRate*2;
+  const buf=audioCtx.createBuffer(1,bufSize,audioCtx.sampleRate);
+  const data=buf.getChannelData(0);
+  for(let i=0;i<bufSize;i++) data[i]=Math.random()*2-1;
+  const noise=audioCtx.createBufferSource(); noise.buffer=buf; noise.loop=true;
+  const windFilter=audioCtx.createBiquadFilter(); windFilter.type='bandpass'; windFilter.frequency.value=420; windFilter.Q.value=0.5;
+  windGainNode=audioCtx.createGain(); windGainNode.gain.value=0.05;
+  noise.connect(windFilter).connect(windGainNode).connect(master); noise.start();
+  [55,82.5].forEach((f,i)=>{
+    const o=audioCtx.createOscillator(); o.type='sine'; o.frequency.value=f;
+    const g=audioCtx.createGain(); g.gain.value=i===0?0.05:0.02;
+    o.connect(g).connect(master); o.start(); droneOsc.push(o);
+  });
+}
+function startMusic(){
+  ensureAudio(); audioCtx.resume();
+  master.gain.cancelScheduledValues(audioCtx.currentTime);
+  master.gain.linearRampToValueAtTime(1,audioCtx.currentTime+1.2);
+}
+function stopMusic(){
+  if(!audioCtx) return;
+  master.gain.cancelScheduledValues(audioCtx.currentTime);
+  master.gain.linearRampToValueAtTime(0,audioCtx.currentTime+0.8);
+}
+function playKeyClick(){
+  if(!audioCtx) return;
+  const tt=audioCtx.currentTime;
+  const o=audioCtx.createOscillator(); o.type='square'; o.frequency.value=1700+Math.random()*700;
+  const g=audioCtx.createGain();
+  o.connect(g).connect(master);
+  g.gain.setValueAtTime(0.0001,tt);
+  g.gain.exponentialRampToValueAtTime(0.05,tt+0.005);
+  g.gain.exponentialRampToValueAtTime(0.0001,tt+0.04);
+  o.start(tt); o.stop(tt+0.05);
+}
+let nextClickT=0;
+
+// ===== カメラ：待機は広く、作業中はおじさんへ3/4アングルでズーム =====
+const CAM_IDLE ={az:Math.PI*0.5,        el:0.60, zoom:1.0, lx:0,   ly:1.0, lz:0.9};
+const CAM_FOCUS={az:Math.PI*0.5-0.55,   el:0.38, zoom:2.35,lx:0.05,ly:0.75,lz:2.0};
+let camTween=null;
+function startCamTween(to,dur){ camTween={t:0,dur:dur||0.75,from:{az,el,zoom,lx:lookX,ly:lookY,lz:lookZ},to}; }
+const lerp=(a,b,k)=>a+(b-a)*k;
+
 // ===== 状態機械 =====
-const bStart=document.getElementById('bStart'),bPhone=document.getElementById('bPhone'),
-      bStop=document.getElementById('bStop'),bSkip=document.getElementById('bSkip');
-const timerEl=document.getElementById('timer'),ringFg=document.getElementById('ringFg'),tLeft=document.getElementById('tLeft');
-const lenPickEl=document.getElementById('lenPick');
-const RC=2*Math.PI*16; ringFg.style.strokeDasharray=RC;
+const bStart=document.getElementById('bStart');
+const uiEl=document.getElementById('ui');
+const gaugeFg=document.getElementById('gaugeFg'),gaugeTime=document.getElementById('gaugeTime');
+const focusGaugeEl=document.getElementById('focusGauge'),focusMenuEl=document.getElementById('focusMenu');
+const bPauseToggle=document.getElementById('bPauseToggle'),bQuit=document.getElementById('bQuit');
+const GP=4*88-8*18+2*Math.PI*18; gaugeFg.style.strokeDasharray=GP; // 角丸正方形の周長
 function setButtons(){
-  const busy=(state==='FOCUS'||state==='NUDGE');
-  bStart.disabled=busy;bPhone.disabled=!busy;bStop.disabled=!busy;bSkip.disabled=busy;
-  bStart.textContent=busy?'作業中':'一緒に始める';
-  bPhone.textContent=(state==='NUDGE')?'作業に戻る':'スマホを触る';
-  timerEl.classList.toggle('on',busy);
-  timerEl.classList.toggle('pause',state==='NUDGE');
-  lenPickEl.style.opacity=busy?'.4':'1';
+  const busy=(state==='FOCUS'||state==='NUDGE'||state==='PAUSED');
+  uiEl.classList.toggle('busy',busy);
+  bStart.disabled=busy;
+  focusGaugeEl.classList.toggle('paused',state==='PAUSED');
+  bPauseToggle.textContent=state==='PAUSED'?'再開':'一時停止';
 }
 function resetDecay(){decayT=0;decayLv=0;cig.visible=false;phoneProp.visible=false;chips.visible=false;}
 function setState(s){
@@ -823,24 +896,47 @@ function setState(s){
   if(s==='NUDGE'){resetDecay();}
   if(s==='IDLE'){waitT=1.0;newWaypoint();resetDecay();}
 }
-function startSession(){sTime=0;setState('FOCUS');say('start');}
+function startSession(){
+  sTime=0;setState('FOCUS');say('start');
+  startCamTween(CAM_FOCUS); startMusic();
+  focusMenuEl.classList.remove('open');
+}
 function endSession(ok){
   const min=ok?SESSION_MIN:Math.max(1,Math.round(sTime/SESSION_SEC*SESSION_MIN));
   addMoney(min); addLog(min,ok);
   recordSessionOutcome(ok,min);
   if(ok){ clearNeglect(); fireSparkle(); }
   setState('IDLE');
+  startCamTween(CAM_IDLE); stopMusic();
+  focusMenuEl.classList.remove('open');
   sayLine(ok?pickDoneLine():pickStopLine());
   if(ok) nodT=0; else headUp=-0.32;
   if(shouldAskDayQuestion()) showDayQuestion();
 }
 bStart.onclick=()=>{if(state==='IDLE')startSession();};
-bStop.onclick=()=>{if(state==='FOCUS'||state==='NUDGE')endSession(false);};
-bPhone.onclick=()=>{
-  if(state==='FOCUS'){setState('NUDGE');say('nudge');}
-  else if(state==='NUDGE'){setState('FOCUS');say('back');}
+
+// ゲージをタップ：一時停止/再開とやめるのメニューを開閉
+focusGaugeEl.addEventListener('click',()=>{ focusMenuEl.classList.toggle('open'); });
+bPauseToggle.onclick=()=>{
+  if(state==='FOCUS'||state==='NUDGE'){ setState('PAUSED'); }
+  else if(state==='PAUSED'){ setState('FOCUS'); }
+  focusMenuEl.classList.remove('open');
 };
-bSkip.onclick=()=>{if(state==='IDLE'){addMoney(SESSION_MIN);addLog(SESSION_MIN,true);resetDecay();}};
+bQuit.onclick=()=>{ if(state==='FOCUS'||state==='NUDGE'||state==='PAUSED') endSession(false); };
+
+// おじさんをタップ：スマホに逃げるデモ演出（本番は放置時間から自動検知する想定の仮トリガー）
+const raycaster=new THREE.Raycaster();
+function tryNudgeTap(clientX,clientY){
+  if(state!=='FOCUS'&&state!=='NUDGE') return;
+  const rect=cv.getBoundingClientRect();
+  const ndc=new THREE.Vector2(((clientX-rect.left)/rect.width)*2-1, -((clientY-rect.top)/rect.height)*2+1);
+  raycaster.setFromCamera(ndc,camera);
+  const hits=raycaster.intersectObject(man,true);
+  if(hits.length){
+    if(state==='FOCUS'){ setState('NUDGE'); say('nudge'); }
+    else { setState('FOCUS'); say('back'); }
+  }
+}
 
 const logList=document.getElementById('logList'); let recN=0;
 function addLog(min,ok){
@@ -868,10 +964,22 @@ function tick(){
   if(state==='FOCUS'){
     sTime+=dt;
     const p=Math.min(1,sTime/SESSION_SEC);
-    ringFg.style.strokeDashoffset=RC*(1-p);
+    gaugeFg.style.strokeDashoffset=GP*(1-p);
     const rem=Math.max(0,SESSION_MIN*60*(1-p));
-    tLeft.textContent=String(Math.floor(rem/60)).padStart(2,'0')+':'+String(Math.floor(rem%60)).padStart(2,'0');
+    gaugeTime.textContent=String(Math.floor(rem/60)).padStart(2,'0')+':'+String(Math.floor(rem%60)).padStart(2,'0');
     if(p>=1) endSession(true);
+  }
+  if(camTween){
+    camTween.t+=dt;
+    const k=Math.min(1,camTween.t/camTween.dur), e=1-Math.pow(1-k,3);
+    az=lerp(camTween.from.az,camTween.to.az,e);
+    el=lerp(camTween.from.el,camTween.to.el,e);
+    zoom=lerp(camTween.from.zoom,camTween.to.zoom,e);
+    lookX=lerp(camTween.from.lx,camTween.to.lx,e);
+    lookY=lerp(camTween.from.ly,camTween.to.ly,e);
+    lookZ=lerp(camTween.from.lz,camTween.to.lz,e);
+    updCam();
+    if(k>=1) camTween=null;
   }
   if(state==='IDLE'||state==='NUDGE'){
     decayT+=dt*(state==='NUDGE'?4:1);
@@ -902,7 +1010,7 @@ function tick(){
   const atDesk=(state==='FOCUS')&&!walking&&d2<=0.3&&decayLv===0;
   sitAmt+=(((atDesk||decayLv===5)?1:0)-sitAmt)*Math.min(1,dt*4);
   lieAmt+=(((decayLv>=6)?1:0)-lieAmt)*Math.min(1,dt*2.5);
-  if(decayLv>=1) yawTarget=0; else if(atDesk) yawTarget=DESK_YAW;
+  if(decayLv>=1||atDesk) yawTarget=0;
   let dy=yawTarget-man.rotation.y;
   while(dy>Math.PI)dy-=Math.PI*2; while(dy<-Math.PI)dy+=Math.PI*2;
   man.rotation.y+=dy*Math.min(1,dt*5);
@@ -917,9 +1025,11 @@ function tick(){
   mouth.scale.set(1,1,1);
 
   if(atDesk&&state==='FOCUS'){
-    const tap=Math.sin(poseT*13)*0.16, tap2=Math.sin(poseT*13+1.9)*0.16;
-    Lx=-1.05+tap; Rx=-1.05+tap2; Lz=0.34; Rz=-0.30; Lf=-0.5+tap*0.7; Rf=-0.5+tap2*0.7;
-    lean=0.26; hx=0.22; hy=-0.12; k=10;
+    // 二段折り：上腕はほぼ垂直のまま、肘を深く曲げて前腕だけを机の上に伸ばす
+    const tap=Math.sin(poseT*13)*0.14, tap2=Math.sin(poseT*13+1.9)*0.14;
+    Lx=-0.30+tap*0.3; Rx=-0.30+tap2*0.3; Lz=0.28; Rz=-0.28; Lf=-1.65+tap; Rf=-1.65+tap2;
+    lean=0.18; hx=0.22; hy=-0.12; k=10;
+    if(t>nextClickT){ playKeyClick(); nextClickT=t+0.08+Math.random()*0.16; }
   } else if(decayLv===1){
     const c=poseT%4.2;
     if(c<1.3){const e=Math.sin(c/1.3*Math.PI);

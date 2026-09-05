@@ -41,23 +41,34 @@
     opacity:0;transition:opacity .4s}
   #focusHint.show{opacity:1}
 
-  /* 初回起動時だけ出す、コンセプト説明の一問一答式チュートリアル */
-  #introTut{position:absolute;inset:0;z-index:50;background:rgba(38,36,31,.6);
-    display:none;align-items:center;justify-content:center;padding:26px;pointer-events:none;
-    opacity:0;transition:opacity .25s}
-  #introTut.show{display:flex;pointer-events:auto;opacity:1}
-  #introTut .tut-card{background:var(--card);border-radius:22px;padding:26px 22px 22px;
-    max-width:270px;width:100%;box-shadow:var(--shadow);text-align:center}
-  #introTut .tut-emoji{font-size:38px;margin-bottom:12px;line-height:1}
-  #introTut h3{margin:0 0 8px;font-size:16.5px}
-  #introTut p{margin:0;font-size:13.5px;line-height:1.65;color:var(--ink-soft)}
-  #tutDots{display:flex;gap:6px;justify-content:center;margin:16px 0 4px}
-  #tutDots span{width:7px;height:7px;border-radius:50%;background:#E5DFD2;transition:background .16s}
-  #tutDots span.on{background:var(--coral)}
-  #introTut .tut-actions{display:flex;flex-direction:column;gap:8px;margin-top:14px}
-  #introTut .btn{width:100%}
-  #tutSkip{background:transparent;box-shadow:none;min-height:36px;color:var(--ink-soft);font-size:12.5px}
-  #tutSkip:active{transform:none;box-shadow:none;opacity:.6}
+  /* ===== 初回だけの導線チュートリアル =====
+     実際の画面（HOME→PICK→FOCUS→完了）を暗く覆い、次に押すべきボタンだけを
+     穴あき（スポットライト）で明るく残す。上下左右4枚の帯で覆うことで、
+     穴の外側は実際にタップをブロックし、寄り道できないようにする */
+  /* コンテナ自体は当たり判定を持たせず、実際にブロックするのは帯(.bar)と
+     スキップボタンだけにする。透明な絶対配置要素は既定でクリックを拾って
+     しまうため、穴の内側（実ボタン）まで塞がないよう明示的にnoneにする */
+  #tutOverlay{position:absolute;inset:0;z-index:55;display:none;pointer-events:none}
+  #tutOverlay.show{display:block}
+  #tutOverlay .bar{position:absolute;background:rgba(20,18,15,.66);pointer-events:auto;
+    transition:all .32s cubic-bezier(.22,.8,.28,1)}
+  #tutHole{position:absolute;pointer-events:none;border-radius:20px;z-index:56;
+    box-shadow:0 0 0 4px rgba(255,255,255,.95), 0 0 0 10px rgba(255,196,75,.6), 0 10px 32px rgba(0,0,0,.4);
+    transition:all .32s cubic-bezier(.22,.8,.28,1)}
+  @keyframes tutHolePulse{0%,100%{box-shadow:0 0 0 4px rgba(255,255,255,.95), 0 0 0 10px rgba(255,196,75,.6), 0 10px 32px rgba(0,0,0,.4)}
+    50%{box-shadow:0 0 0 4px rgba(255,255,255,.95), 0 0 0 14px rgba(255,196,75,.32), 0 10px 32px rgba(0,0,0,.4)}}
+  #tutHole.pulse{animation:tutHolePulse 1.4s ease-in-out infinite}
+  #tutCallout{position:absolute;z-index:57;max-width:210px;background:var(--card);border-radius:16px;
+    padding:13px 16px;box-shadow:var(--shadow);font-size:13px;line-height:1.62;color:var(--ink);
+    pointer-events:none;transition:all .32s cubic-bezier(.22,.8,.28,1)}
+  #tutCallout b{color:#B24E30}
+  #tutCallout.center{max-width:240px;text-align:center;padding:22px 20px}
+  #tutCallout .tut-emoji{font-size:30px;margin-bottom:8px}
+  #tutCallout .btn{width:100%;margin-top:12px;pointer-events:auto}
+  #tutSkip{position:absolute;z-index:57;right:12px;top:12px;
+    background:rgba(20,18,15,.55);color:#fff;font-size:11.5px;font-weight:700;
+    padding:7px 13px;border-radius:999px;border:0;cursor:pointer}
+  #tutSkip:active{opacity:.7}
   /* 起動演出のあいだは下のUIを伏せておく */
   #ui.intro .on-home{opacity:0;transition:opacity .5s}
   #ui:not(.intro) .on-home{opacity:1;transition:opacity .5s}
@@ -100,26 +111,31 @@
   #ui.screen-focus #say.show-confirm{opacity:1}
 
   #backBtn{position:absolute;left:12px;top:12px;z-index:7;pointer-events:auto;
-    width:44px;height:44px;border-radius:50%;border:0;background:var(--card);box-shadow:var(--shadow);
-    font-size:18px;color:var(--ink);cursor:pointer;display:none;align-items:center;justify-content:center}
+    width:52px;height:52px;border-radius:50%;border:0;background:var(--card);box-shadow:var(--shadow);
+    font-size:21px;color:var(--ink);cursor:pointer;display:none;align-items:center;justify-content:center}
   #backBtn:active{transform:translateY(1px)}
+  /* もう一度チュートリアルを見るための入口。HOME画面だけ、右上に出す */
+  #helpBtn{position:absolute;right:12px;top:12px;z-index:7;pointer-events:auto;
+    width:40px;height:40px;border-radius:50%;border:0;background:rgba(38,36,31,.4);box-shadow:var(--shadow);
+    font-size:16px;font-weight:700;color:#fff;cursor:pointer;display:none;align-items:center;justify-content:center}
+  #helpBtn:active{transform:translateY(1px)}
 
   /* 正方形のゲージが、タップで長方形に伸びて中に操作を出す */
   #focusGauge{display:none;position:absolute;right:14px;bottom:14px;
-    width:76px;height:76px;flex-direction:column;align-items:stretch;
+    width:112px;height:112px;flex-direction:column;align-items:stretch;
     pointer-events:auto;cursor:pointer;z-index:6;overflow:hidden;
-    background:rgba(38,36,31,.42);border-radius:20px;box-shadow:var(--shadow);
+    background:rgba(38,36,31,.42);border-radius:26px;box-shadow:var(--shadow);
     transition:width .28s cubic-bezier(.22,.8,.28,1),height .28s cubic-bezier(.22,.8,.28,1),border-radius .28s;}
   #ui.screen-focus #focusGauge{display:flex}
-  #focusGauge.open{width:168px;height:206px;border-radius:20px;cursor:default}
-  #focusGauge .gwrap{position:relative;width:76px;height:76px;flex:none;align-self:center}
-  #gaugeSvg{width:76px;height:76px;display:block}
-  #gaugeSvg rect{fill:none;stroke-width:7;stroke-linecap:round;paint-order:stroke}
+  #focusGauge.open{width:236px;height:280px;border-radius:26px;cursor:default}
+  #focusGauge .gwrap{position:relative;width:112px;height:112px;flex:none;align-self:center}
+  #gaugeSvg{width:112px;height:112px;display:block}
+  #gaugeSvg rect{fill:none;stroke-width:8;stroke-linecap:round;paint-order:stroke}
   #gaugeBg{stroke:rgba(255,255,255,.4)}
   #gaugeFg{stroke:var(--mint);transition:stroke-dashoffset .25s linear}
   #focusGauge.paused #gaugeFg{stroke:var(--sun)}
   #gaugeTime{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-    font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;color:#fff;
+    font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;color:#fff;
     text-shadow:0 2px 6px rgba(0,0,0,.4);letter-spacing:.01em;pointer-events:none}
 
   #focusMenu{display:none;flex-direction:column;gap:7px;padding:8px 10px 10px;pointer-events:auto}
@@ -136,6 +152,7 @@
   #lenPick{display:none}
 
   /* ===== 時間選択画面 ===== */
+  #pickCtrl{margin-bottom:9px}
   #pickTop{display:flex;align-items:center;gap:8px}
   #pickCard{flex:1;text-align:center;padding:14px 12px}
   #pickTime{font-size:46px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.01em}
@@ -152,26 +169,27 @@
   #pickSugDot{position:absolute;top:-3px;width:10px;height:10px;border-radius:50%;background:var(--sky);
     border:2px solid #fff;box-shadow:0 1px 3px rgba(63,58,52,.3);transform:translateX(-50%)}
   #pickTagLabel{font-size:11px;font-weight:700;color:var(--ink-soft);margin:12px 0 6px}
-  #pickTags{display:flex;gap:6px;flex-wrap:wrap}
-  #pickTags button{border:0;border-radius:999px;min-height:40px;padding:10px 18px;font-family:inherit;font-weight:700;
-    font-size:13.5px;background:#F3EFE8;color:var(--ink-soft);cursor:pointer;transition:.16s}
+  #pickTags{display:flex;gap:8px;flex-wrap:wrap}
+  #pickTags button{border:0;border-radius:999px;min-height:48px;padding:13px 22px;font-family:inherit;font-weight:700;
+    font-size:15px;background:#F3EFE8;color:var(--ink-soft);cursor:pointer;transition:.16s}
   #pickTags button[aria-pressed="true"]{background:var(--coral);color:#fff}
 
   #stageName{cursor:pointer;-webkit-user-select:none;user-select:none}
   .seg{display:flex;background:#F3EFE8;border-radius:11px;padding:2px;gap:2px;flex:1}
-  .seg button{flex:1;border:0;background:transparent;border-radius:9px;min-height:36px;padding:8px 0;font-family:inherit;
-    font-weight:700;font-size:12px;color:var(--ink-soft);cursor:pointer;transition:.16s}
+  .seg button{flex:1;border:0;background:transparent;border-radius:9px;min-height:40px;padding:9px 0;font-family:inherit;
+    font-weight:700;font-size:13px;color:var(--ink-soft);cursor:pointer;transition:.16s}
   .seg button[aria-pressed="true"]{background:var(--sun);color:#6B4A00;box-shadow:0 2px 0 rgba(180,130,10,.28)}
-  #say{position:relative;padding:9px 13px;min-height:44px;display:flex;align-items:center}
-  #sayName{display:inline-block;font-size:9.5px;font-weight:700;color:#B24E30;background:#FFE7DE;
-    padding:2px 8px;border-radius:999px;margin-bottom:3px}
-  #sayText{font-size:13px;line-height:1.45}
-  #say.quiet #sayText{color:var(--ink-soft);font-size:12.5px}
-  #ctrl{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:7px}
-  .btn{border:0;border-radius:14px;min-height:44px;padding:12px 6px;font-family:inherit;font-weight:700;font-size:13.5px;
+  #say{position:relative;padding:16px 20px;min-height:64px;display:flex;align-items:center}
+  #sayName{display:inline-block;font-size:12px;font-weight:700;color:#B24E30;background:#FFE7DE;
+    padding:4px 10px;border-radius:999px;margin-bottom:5px}
+  #sayText{font-size:16px;line-height:1.55}
+  #say.quiet #sayText{color:var(--ink-soft);font-size:15px}
+  #sayPick.quiet #sayTextPick{color:var(--ink-soft)}
+  #ctrl{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:9px}
+  .btn{border:0;border-radius:16px;min-height:52px;padding:14px 8px;font-family:inherit;font-weight:700;font-size:15px;
     background:#fff;color:var(--ink);cursor:pointer;box-shadow:0 3px 0 rgba(63,58,52,.14);transition:transform .1s,box-shadow .1s}
   .btn:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(63,58,52,.14)}
-  .btn.primary{grid-column:span 3;background:var(--coral);color:#fff;box-shadow:0 3px 0 #D9603F;font-size:15.5px;min-height:52px;padding:14px 6px}
+  .btn.primary{grid-column:span 3;background:var(--coral);color:#fff;box-shadow:0 4px 0 #D9603F;font-size:20px;min-height:68px;padding:18px 8px}
   .btn.primary:active{box-shadow:0 1px 0 #D9603F}
   .btn.sky{background:var(--sky);color:#0C4E66;box-shadow:0 3px 0 #3EA6C9}
   .btn.sky:active{box-shadow:0 1px 0 #3EA6C9}
@@ -280,19 +298,17 @@
   <div id="stage"></div>
   <div id="coin"></div>
   <button id="backBtn" aria-label="戻る">←</button>
+  <button id="helpBtn" aria-label="使い方をもう一度見る">?</button>
   <div id="tapHint">家をタップすると今の状況が見られます</div>
   <div id="focusHint">ゲージをタップで一時停止・やめる<br>おじさんをタップするとサボりだす</div>
-  <div id="introTut" role="dialog" aria-modal="true" aria-label="OjiMateの使い方">
-    <div class="tut-card">
-      <div class="tut-emoji" id="tutEmoji">🏚️</div>
-      <h3 id="tutTitle"></h3>
-      <p id="tutText"></p>
-      <div id="tutDots"></div>
-      <div class="tut-actions">
-        <button class="btn primary" id="tutNext">次へ</button>
-        <button class="btn" id="tutSkip">スキップ</button>
-      </div>
-    </div>
+  <div id="tutOverlay" role="dialog" aria-modal="true" aria-label="OjiMateの使い方">
+    <div class="bar" id="tutBarT"></div>
+    <div class="bar" id="tutBarB"></div>
+    <div class="bar" id="tutBarL"></div>
+    <div class="bar" id="tutBarR"></div>
+    <div id="tutHole"></div>
+    <div id="tutCallout"></div>
+    <button id="tutSkip" type="button">スキップ</button>
   </div>
   <div id="ui" class="screen-home">
     <div id="topRow">
@@ -309,10 +325,10 @@
       </div>
     </div>
     <div class="spacer on-home"></div>
-    <div class="card on-home" id="say"><div><div id="sayName">おじさん</div><div id="sayText">お、来たな。今日どうする？</div></div></div>
     <div id="ctrl" class="on-home">
       <button class="btn primary" id="bStart">一緒に始める</button>
     </div>
+    <div class="card on-home" id="say"><div><div id="sayName">おじさん</div><div id="sayText">お、来たな。今日どうする？</div></div></div>
     <div class="card" id="dayQ" hidden>
       <div id="dqText">今日の調子はどうやった？</div>
       <div id="dqBtns">
@@ -323,6 +339,9 @@
 
     <!-- ===== 時間選択画面 ===== -->
     <div class="spacer on-pick"></div>
+    <div class="on-pick" id="pickCtrl">
+      <button class="btn primary" id="bPickStart">セッション開始</button>
+    </div>
     <div id="pickTop" class="card on-pick">
       <div id="pickCard">
         <div id="pickTime">00:50</div>
@@ -342,9 +361,6 @@
       </div>
     </div>
     <div class="card on-pick" id="sayPick"><div><div id="sayNamePick">おじさん</div><div id="sayTextPick">今日はどれくらいにする？</div></div></div>
-    <div class="on-pick" id="pickCtrl">
-      <button class="btn primary" id="bPickStart">セッション開始</button>
-    </div>
 
     <!-- ===== 作業中画面 ===== -->
     <div id="focusGauge" class="on-focus">
@@ -390,7 +406,8 @@ function defaultStore(){
     money:0, stageIdx:0,
     lastSessionMin:50,
     tutorialHome:false, tutorialFocus:false, tutorialIntro:false, // 初回だけのチュートリアル表示を出したかどうか
-    ojiMateNightSessions:0
+    ojiMateNightSessions:0,
+    agentEndpoint:'', agentSecret:'', // おじさんのセリフをAIに読ませたい人だけ設定するプロキシ（worker/参照）
   };
 }
 function loadStore(){
@@ -1121,12 +1138,110 @@ function pickStopLine(){
   if(recentBadStreak()>=2) return 'ここのところ途中でやめること多いな。次はもうちょい短くしてみるか。';
   return LINES[lv].stop;
 }
+const choice=arr=>arr[(Math.random()*arr.length)|0];
+// 時刻選択画面のセリフ：固定文言をやめ、直近の実績（store.recent末尾＝前回の実働分と
+// 完走/中断）と前回選んだ時間（store.lastSessionMin）を踏まえて毎回組み立てる。
+// AIエージェント（askAgent）が設定されていればそちらの生成文に後で差し替わる。
+// このローカル版は、エージェント未設定でも「参考にしている感」を出すためのフォールバック。
+function pickTimeLine(){
+  const last=store.recent[store.recent.length-1];
+  const lastMin=store.lastSessionMin;
+  if(store.todayAnswer==='tough')
+    return choice(['今日はしんどい言うてたな。無理せず短めにしとこか。','さっきしんどいて答えとったな。今日はゆるめでいこう。']);
+  if(recentBadStreak()>=2)
+    return choice([`最近${recentBadStreak()}回続けて途中でやめとるな。今日は${suggestedMinutes()}分くらいで様子見るか。`,'ここのところ続かんし、今日は欲張らんとこか。']);
+  if(isLateNight()&&closenessTier()>=2)
+    return choice(['こんな時間か。長丁場はやめて、切り上げやすい時間にしとこ。','夜遅いしな。今日は短めにしとくか。']);
+  if(!last)
+    return choice(['はじめてやな。まずは短めの15分くらいでどう？','最初は無理せんとこ。15分からでええよ。']);
+  if(!last.ok)
+    return choice([`前回は${last.min}分で切り上げたな。今日は${Math.max(5,last.min-10)}分くらいから戻してみるか。`,`さっきは途中でやめたな。今日は${Math.max(5,last.min-10)}分くらいで慣らすか。`]);
+  if(lastMin>last.min+5)
+    return choice([`前回は${last.min}分やったな。今日はそれよりちょい短めでもええんちゃう。`,`この前${last.min}分やったし、今日は少し抑えめでいこか。`]);
+  if(lastMin<last.min-5)
+    return choice([`前回${last.min}分できたな。今日はもうちょい伸ばせそうやったら攻めてみるか。`,`この前${last.min}分やったし、今日はそれくらい狙ってみるか。`]);
+  return choice([`前回と同じ${last.min}分でいくか。`,`この前も${last.min}分やったな。今日も同じくらいでどうや。`]);
+}
 function pickDoneLine(){
   const streak=recentGoodStreak();
   if(streak>=3) return streak+'回連続で完走やな。';
   return LINES[lv].done;
 }
 function sayIdle(){ sayLine(pickIdleLine()); }
+
+// ===== AIエージェント（任意設定）=====
+// トガメと同じ構成：APIキーをブラウザに置けないので、Cloudflare Worker等の
+// プロキシを自分で立てて住所と合言葉をここに入れる（worker/ を参照）。
+// 未設定ならローカルのセリフ（pickIdleLine/pickTimeLine等）だけで動く。
+async function askAgent({ system, user, onDelta }){
+  if(!store.agentEndpoint) return null;
+  const res=await fetch(store.agentEndpoint,{
+    method:'POST',
+    headers:{ 'content-type':'application/json', 'x-ojimate-key': store.agentSecret||'' },
+    body: JSON.stringify({ system, user }),
+  });
+  if(!res.ok) throw new Error((await res.text()).slice(0,300)||String(res.status));
+  const reader=res.body.getReader(), dec=new TextDecoder();
+  let buf='', out='';
+  for(;;){
+    const {value,done}=await reader.read();
+    if(done) break;
+    buf+=dec.decode(value,{stream:true});
+    const lines=buf.split('\n'); buf=lines.pop();
+    for(const line of lines){
+      if(!line.startsWith('data:')) continue;
+      let ev; try{ ev=JSON.parse(line.slice(5).trim()); }catch(e){ continue; }
+      if(ev.type==='content_block_delta'&&ev.delta&&ev.delta.type==='text_delta'){
+        out+=ev.delta.text; if(onDelta) onDelta(ev.delta.text,out);
+      }
+    }
+  }
+  return out.trim();
+}
+// 人格。「関西弁で軽口を叩くが、行動は責めない」という既存のLINES/pickXxxLineの
+// トーンを踏襲させる。命令形やダメ出しを禁じているのは、統制的な言い方をされると
+// 内容ごと拒絶される（心理的リアクタンス）ため
+function agentSystemPrompt(){
+  return [
+    'あなたは集中アプリ「OjiMate」に住む、ユーザーの分身の「おじさん」です。',
+    '関西弁で、親しい相手にだけ使うような軽い口調で1文だけ返してください。',
+    '絵文字・記号・カギ括弧は使わない。説明や前置きは書かず、セリフ本文だけを返す。',
+    'ユーザーを責めたり、命令形で行動を指図したりしない。事実への軽い言及と、',
+    '今日の作業時間についてのゆるい提案までにとどめる。',
+  ].join('\n');
+}
+function agentPickPrompt(){
+  const last=store.recent[store.recent.length-1];
+  const ctx=[
+    `前回選んだ時間: ${store.lastSessionMin}分`,
+    last ? `直近のセッション: ${last.min}分・${last.ok?'完走':'途中でやめた'}` : '直近のセッションはまだない',
+    `連続完走: ${recentGoodStreak()}回 / 連続中断: ${recentBadStreak()}回`,
+    `付き合いの長さ: ${closenessTier()===0?'初日':closenessTier()===1?'顔なじみ':'長い付き合い'}`,
+    isLateNight() ? '今は深夜帯' : null,
+  ].filter(Boolean).join('\n');
+  return `これから作業時間を選ぶ画面に出す、ひとことを考えて。\n${ctx}\nこの状況を踏まえて、今日はどれくらいやるか一緒に決める一言を。`;
+}
+// おじさんの名札を長押しすると、エージェントの接続先（Worker住所・合言葉）を
+// 設定できる。設定画面を別途作らずに済ませるための最小限の入口
+function configureAgent(){
+  const endpoint=window.prompt('おじさんに喋らせるAIエージェント（Cloudflare Worker等）の住所。\n空にすると固定のセリフに戻る。', store.agentEndpoint||'');
+  if(endpoint===null) return;
+  store.agentEndpoint=endpoint.trim();
+  if(store.agentEndpoint){
+    const secret=window.prompt('合言葉（Workerに設定したものと同じ文字列）', store.agentSecret||'');
+    if(secret!==null) store.agentSecret=secret.trim();
+  }else{
+    store.agentSecret='';
+  }
+  saveStore();
+}
+function bindLongPress(el, fn){
+  let t=null;
+  el.addEventListener('pointerdown', ()=>{ t=setTimeout(fn,650); });
+  ['pointerup','pointercancel','pointerleave'].forEach(ev=>el.addEventListener(ev, ()=>{ if(t){ clearTimeout(t); t=null; } }));
+}
+bindLongPress(sayName, configureAgent);
+bindLongPress(document.getElementById('sayNamePick'), configureAgent);
 
 function setLv(n){
   lv=n;
@@ -1150,7 +1265,8 @@ function setLv(n){
 // マーカーとしてのみ示し、初期値やスライダー操作を上書きしない。
 const pickSlider=document.getElementById('pickSlider'), pickTime=document.getElementById('pickTime'),
       pickTotal=document.getElementById('pickTotal'), pickSugDot=document.getElementById('pickSugDot'),
-      pickTagsEl=document.getElementById('pickTags'), sayTextPick=document.getElementById('sayTextPick');
+      pickTagsEl=document.getElementById('pickTags'), sayTextPick=document.getElementById('sayTextPick'),
+      sayPickBox=document.getElementById('sayPick');
 let sessionTag='勉強';
 function minToClock(min){ return String(Math.floor(min/60)).padStart(2,'0')+':'+String(min%60).padStart(2,'0'); }
 function refreshLenSuggestion(){ /* 互換用：呼び出し元は残すが、初期値の上書きはしない */ }
@@ -1164,11 +1280,24 @@ function placeSugDot(){
   const pct=(sug-5)/(120-5)*100;
   pickSugDot.style.left=pct+'%';
 }
+let pickLineToken=0; // 画面を出たり入ったりしたときに古いAI応答で上書きしないための世代カウンタ
 function openPickScreen(){
   pickSlider.value=SESSION_MIN; // 前回選んだ時間（起動時に store から反映済み）
   updatePickDisplay(); placeSugDot();
-  sayTextPick.textContent = suggestedMinutes()<SESSION_MIN
-    ? '今日はそれよりちょい短めでもええんちゃう。' : '今日はそれくらいがええんちゃう。';
+  sayTextPick.textContent=pickTimeLine(); // まずローカルの言い分けをすぐ出す
+  sayPickBox.classList.remove('quiet');
+  const myToken=++pickLineToken;
+  if(!store.agentEndpoint) return;
+  sayPickBox.classList.add('quiet');
+  askAgent({
+    system: agentSystemPrompt(),
+    user: agentPickPrompt(),
+    onDelta(_d, all){ if(myToken===pickLineToken){ sayTextPick.textContent=all; } },
+  }).then(text=>{
+    if(myToken!==pickLineToken) return;
+    sayPickBox.classList.remove('quiet');
+    if(text) sayTextPick.textContent=text;
+  }).catch(()=>{ if(myToken===pickLineToken) sayPickBox.classList.remove('quiet'); });
 }
 pickSlider.addEventListener('input',()=>{
   SESSION_MIN=+pickSlider.value; SESSION_SEC=SESSION_MIN*DEMO_SEC_PER_MIN;
@@ -1325,6 +1454,7 @@ const lerp=(a,b,k)=>a+(b-a)*k;
 const bStart=document.getElementById('bStart');
 const uiEl=document.getElementById('ui');
 const backBtn=document.getElementById('backBtn');
+const helpBtn=document.getElementById('helpBtn');
 const bPickStart=document.getElementById('bPickStart');
 const gaugeFg=document.getElementById('gaugeFg'),gaugeTime=document.getElementById('gaugeTime');
 const focusGaugeEl=document.getElementById('focusGauge'),focusMenuEl=document.getElementById('focusMenu');
@@ -1340,6 +1470,7 @@ function setScreen(s){
   uiEl.classList.remove('screen-home','screen-pick','screen-focus');
   uiEl.classList.add('screen-'+s.toLowerCase());
   backBtn.style.display=(s==='PICK')?'flex':'none';
+  helpBtn.style.display=(s==='HOME')?'flex':'none';
   focusGaugeEl.classList.remove('open');
   if(s!=='FOCUS') focusHintEl.classList.remove('show'); // 途中でやめても居座らせない
 }
@@ -1363,6 +1494,7 @@ bStart.onclick=()=>{
   setScreen('PICK'); openPickScreen();
   act=null; waitT=0; wp.copy(GREET_POS); // 手前へ歩かせる（wander再開は下のガードで止める）
   startCamTween(CAM_PICK);
+  if(tutActive&&tutStepKey==='home') tutGoto('pick');
 };
 backBtn.onclick=()=>{
   if(uiScreen!=='PICK') return;
@@ -1377,11 +1509,12 @@ bPickStart.onclick=()=>{
   store.lastSessionMin=SESSION_MIN; saveStore();
   setScreen('FOCUS');
   startSession();
-  if(!store.tutorialFocus){
+  if(!store.tutorialFocus && !tutActive){
     setTimeout(()=>{ focusHintEl.classList.add('show');
       setTimeout(()=>focusHintEl.classList.remove('show'),5200); }, 900);
     store.tutorialFocus=true; saveStore();
   }
+  if(tutActive&&tutStepKey==='pick') tutGoto('focus');
 };
 function startSession(){
   sTime=0;setState('FOCUS');say('start');
@@ -1399,6 +1532,7 @@ function endSession(ok){
   sayLine(ok?pickDoneLine():pickStopLine());
   if(ok) nodT=0; else headUp=-0.32;
   if(shouldAskDayQuestion(ok)) showDayQuestion();
+  if(tutActive&&tutStepKey==='focus') tutGoto('done');
 }
 
 // ゲージをタップ：一時停止/再開とやめるのメニューを開閉
@@ -1461,11 +1595,22 @@ function toggleInfo(force){
   if(open) tapHintEl.classList.remove('show');
 }
 function tryHouseTap(clientX,clientY){
-  if(uiScreen!=='HOME'||!houseGroup) return false;
+  if(uiScreen!=='HOME') return false;
   const rect=cv.getBoundingClientRect();
-  const ndc=new THREE.Vector2(((clientX-rect.left)/rect.width)*2-1, -((clientY-rect.top)/rect.height)*2+1);
-  raycaster.setFromCamera(ndc,camera);
-  if(raycaster.intersectObject(houseGroup,true).length){ toggleInfo(); return true; }
+  let hit=false;
+  if(houseGroup){
+    const ndc=new THREE.Vector2(((clientX-rect.left)/rect.width)*2-1, -((clientY-rect.top)/rect.height)*2+1);
+    raycaster.setFromCamera(ndc,camera);
+    hit = raycaster.intersectObject(houseGroup,true).length>0;
+  }
+  if(!hit){
+    // 3Dの厳密な当たり判定は視点や手前の小物の重なりでシビアになりがち。
+    // 家がだいたい映っている中央帯はフォールバックとしても「家をタップ」扱いにし、
+    // 「押したのに何も出ない」を防ぐ
+    const nx=(clientX-rect.left)/rect.width, ny=(clientY-rect.top)/rect.height;
+    hit = nx>0.12 && nx<0.88 && ny>0.2 && ny<0.68;
+  }
+  if(hit){ toggleInfo(); return true; }
   toggleInfo(false); // 家以外をタップしたら閉じる
   return false;
 }
@@ -1530,52 +1675,102 @@ function runIntro(){
     waitT=1.2; newWaypoint();
   }, 2300);
   if(!store.tutorialHome){
-    setTimeout(()=>{ tapHintEl.classList.add('show');
+    setTimeout(()=>{ if(tutActive) return; tapHintEl.classList.add('show');
       setTimeout(()=>tapHintEl.classList.remove('show'),4200); }, 4200);
     store.tutorialHome=true; saveStore();
   }
 }
 runIntro();
 
-// ===== 初回だけの導入チュートリアル：表裏一体の仕組みをステップで説明する =====
-// タイトル画面（#ttFrame）が消えた直後、第2の<script>から showIntroTutorial() を呼ぶ。
-// runIntro自体はタイトルの裏で即座に走るため、ここでは別フラグ(tutorialIntro)で
-// 「タイトルを抜けたあとのユーザー向け」表示だけを独立に一度だけ出す。
-const TUTORIAL_STEPS=[
-  {emoji:'🏚️', title:'おじさんは、もう一人の自分', text:'集中すればおじさんも机に向かい、サボればおじさんも一緒にサボりだす。表裏一体の相棒。'},
-  {emoji:'🏠', title:'家をタップしてみて', text:'所持金・経過日数・これまでの記録が見られる。集中した時間はそのままお金になり、住む家が育っていく。'},
-  {emoji:'⏱️', title:'「一緒に始める」で開始', text:'時間とタグを選んでセッションを始める。ゲージをタップすると一時停止・やめるが出せる。'},
-  {emoji:'📱', title:'サボりたくなったら', text:'おじさんをタップすると、一緒にスマホを触りだす。戻したいときはもう一度タップ。'},
-];
-const introTutEl=document.getElementById('introTut');
-const tutDotsEl=document.getElementById('tutDots');
-const tutEmojiEl=document.getElementById('tutEmoji');
-const tutTitleEl=document.getElementById('tutTitle');
-const tutTextEl=document.getElementById('tutText');
-const tutNextEl=document.getElementById('tutNext');
-let tutStep=0;
-function renderTutStep(){
-  const s=TUTORIAL_STEPS[tutStep];
-  tutEmojiEl.textContent=s.emoji;
-  tutTitleEl.textContent=s.title;
-  tutTextEl.textContent=s.text;
-  tutDotsEl.innerHTML=TUTORIAL_STEPS.map((_,i)=>`<span class="${i===tutStep?'on':''}"></span>`).join('');
-  tutNextEl.textContent=(tutStep===TUTORIAL_STEPS.length-1)?'はじめる':'次へ';
+// ===== 初回だけの導線チュートリアル =====
+// タイトル画面が消えた直後、第2の<script>から showIntroTutorial() を呼ぶ。
+// コンセプトを先に説明するモーダルではなく、実際のHOME→PICK→FOCUS→完了という
+// 画面遷移そのものに沿わせる：毎ステップ、次に押すべきボタンだけを暗い帯で
+// 囲んだ穴（スポットライト）から明るく覗かせ、それ以外のタップは帯でブロックする。
+// ユーザーが実際にそのボタンを押した瞬間（bStart/bPickStart/endSession側から
+// tutGoto()を呼んで）次のステップへ進み、セッションの完了まで追従する。
+let tutActive=false, tutStepKey=null, tutTargetEl=null, tutRAF=null;
+const tutOverlayEl=document.getElementById('tutOverlay');
+const tutHoleEl=document.getElementById('tutHole');
+const tutCalloutEl=document.getElementById('tutCallout');
+const tutBars={
+  t:document.getElementById('tutBarT'), b:document.getElementById('tutBarB'),
+  l:document.getElementById('tutBarL'), r:document.getElementById('tutBarR'),
+};
+const TUTORIAL_STEPS={
+  home:  '<b>①</b> おじさんは自分の分身。ここをタップして一緒に集中を始めよう。',
+  pick:  '<b>②</b> 時間とタグを選んだら、ここでセッション開始。',
+  focus: '<b>③</b> ここが残り時間ゲージ。タップで一時停止・やめるを出せる。おじさんをタップするとサボりだすよ。まずはこのまま集中してみよう。',
+};
+function tutPositionAround(el){
+  const pr=phone.getBoundingClientRect(), r=el.getBoundingClientRect(), pad=10;
+  const hole={
+    left: Math.max(0,r.left-pr.left-pad), top: Math.max(0,r.top-pr.top-pad),
+    right: Math.min(pr.width,r.right-pr.left+pad), bottom: Math.min(pr.height,r.bottom-pr.top+pad),
+  };
+  const pw=pr.width, ph=pr.height;
+  tutHoleEl.style.left=hole.left+'px'; tutHoleEl.style.top=hole.top+'px';
+  tutHoleEl.style.width=(hole.right-hole.left)+'px'; tutHoleEl.style.height=(hole.bottom-hole.top)+'px';
+  tutBars.t.style.cssText=`left:0;top:0;width:${pw}px;height:${hole.top}px`;
+  tutBars.b.style.cssText=`left:0;top:${hole.bottom}px;width:${pw}px;height:${Math.max(0,ph-hole.bottom)}px`;
+  tutBars.l.style.cssText=`left:0;top:${hole.top}px;width:${hole.left}px;height:${hole.bottom-hole.top}px`;
+  tutBars.r.style.cssText=`left:${hole.right}px;top:${hole.top}px;width:${Math.max(0,pw-hole.right)}px;height:${hole.bottom-hole.top}px`;
+  const calloutW=210, calloutH=Math.min(150,ph*0.24);
+  const top=(hole.bottom+16+calloutH<ph) ? hole.bottom+16 : Math.max(12,hole.top-16-calloutH);
+  const left=Math.max(12,Math.min((hole.left+hole.right)/2-calloutW/2, pw-12-calloutW));
+  tutCalloutEl.style.left=left+'px'; tutCalloutEl.style.top=top+'px';
 }
-function closeIntroTutorial(){
-  introTutEl.classList.remove('show');
+function tutLoop(){
+  if(!tutActive||!tutTargetEl) return;
+  tutPositionAround(tutTargetEl);
+  tutRAF=requestAnimationFrame(tutLoop);
+}
+function tutGoto(key){
+  tutStepKey=key;
+  if(key==='done'){
+    if(tutRAF){ cancelAnimationFrame(tutRAF); tutRAF=null; }
+    tutTargetEl=null;
+    tutHoleEl.classList.remove('pulse');
+    tutHoleEl.style.opacity='0';
+    document.getElementById('tutSkip').style.display='none';
+    const pr=phone.getBoundingClientRect();
+    tutBars.t.style.cssText=`left:0;top:0;width:${pr.width}px;height:${pr.height}px`;
+    tutBars.b.style.cssText='width:0;height:0'; tutBars.l.style.cssText='width:0;height:0'; tutBars.r.style.cssText='width:0;height:0';
+    tutCalloutEl.className='center';
+    tutCalloutEl.style.left=(pr.width/2-120)+'px'; tutCalloutEl.style.top=(pr.height/2-95)+'px';
+    tutCalloutEl.innerHTML='<div class="tut-emoji">🎉</div>お疲れ様！<br>この調子でおじさんと一緒に続けていこう。<button class="btn primary" id="tutDone">閉じる</button>';
+    document.getElementById('tutDone').addEventListener('click', tutClose);
+    return;
+  }
+  tutTargetEl = key==='home'?bStart : key==='pick'?bPickStart : focusGaugeEl;
+  tutCalloutEl.className='';
+  tutCalloutEl.innerHTML=TUTORIAL_STEPS[key];
+  tutHoleEl.style.opacity='1';
+  tutHoleEl.classList.add('pulse');
+  tutPositionAround(tutTargetEl);
+  if(tutRAF) cancelAnimationFrame(tutRAF);
+  tutRAF=requestAnimationFrame(tutLoop);
+}
+function tutClose(){
+  tutActive=false; tutStepKey=null; tutTargetEl=null;
+  if(tutRAF){ cancelAnimationFrame(tutRAF); tutRAF=null; }
+  tutOverlayEl.classList.remove('show');
   store.tutorialIntro=true; saveStore();
 }
-tutNextEl.addEventListener('click', ()=>{
-  if(tutStep>=TUTORIAL_STEPS.length-1){ closeIntroTutorial(); return; }
-  tutStep++; renderTutStep();
-});
-document.getElementById('tutSkip').addEventListener('click', closeIntroTutorial);
+document.getElementById('tutSkip').addEventListener('click', tutClose);
 function showIntroTutorial(){
   if(store.tutorialIntro) return;
-  tutStep=0; renderTutStep();
-  introTutEl.classList.add('show');
+  tutActive=true;
+  document.getElementById('tutSkip').style.display='';
+  tutOverlayEl.classList.add('show');
+  tutGoto('home');
 }
+// 右上の「?」からは、既に見ていても何度でも見返せる
+document.getElementById('helpBtn').addEventListener('click', ()=>{
+  if(uiScreen!=='HOME'||state!=='IDLE') return;
+  store.tutorialIntro=false;
+  showIntroTutorial();
+});
 
 const clock=new THREE.Clock();
 function tick(){

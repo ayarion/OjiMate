@@ -1,0 +1,8 @@
+name = "ojimate-agent"
+main = "index.js"
+compatibility_date = "2026-08-01"
+
+# Workers AI を使うためのバインディング。これがあると env.AI が生える。
+# APIキーは不要（Cloudflareアカウントの無料枠から引かれる）。
+[ai]
+binding = "AI"

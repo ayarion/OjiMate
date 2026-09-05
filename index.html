@@ -34,6 +34,12 @@
     padding:5px 12px;border-radius:999px;pointer-events:none;z-index:5;
     opacity:0;transition:opacity .4s;white-space:nowrap}
   #tapHint.show{opacity:1}
+  /* 初回だけ出す作業中チュートリアル：ゲージとおじさんの、タップできる場所を教える */
+  #focusHint{position:absolute;right:14px;bottom:100px;max-width:172px;text-align:right;
+    font-size:11px;font-weight:700;line-height:1.55;color:#fff;background:rgba(38,36,31,.6);
+    padding:8px 13px;border-radius:14px;pointer-events:none;z-index:5;
+    opacity:0;transition:opacity .4s}
+  #focusHint.show{opacity:1}
   /* 起動演出のあいだは下のUIを伏せておく */
   #ui.intro .on-home{opacity:0;transition:opacity .5s}
   #ui:not(.intro) .on-home{opacity:1;transition:opacity .5s}
@@ -64,6 +70,9 @@
   #ui.screen-home #dayQ:not([hidden]){display:flex}
   #ui.screen-home #dayQ[hidden]{display:none}
   #ui.screen-home #ctrl[hidden]{display:none!important}
+  /* #dayQ の素の display:flex は「HOME画面かつhidden属性なし」の時だけ有効にしたい。
+     PICK・FOCUSではhidden属性の有無にかかわらず常に隠す（素のID指定がhidden属性より詳細度で勝ってしまうため）。*/
+  #ui.screen-pick #dayQ,#ui.screen-focus #dayQ{display:none!important}
 
   /* 作業中は右下のゲージだけ。#say は長押し確認の間だけ例外的にフェード表示 */
   #ui.screen-focus #say{
@@ -254,6 +263,7 @@
   <div id="coin"></div>
   <button id="backBtn" aria-label="戻る">←</button>
   <div id="tapHint">家をタップすると今の状況が見られます</div>
+  <div id="focusHint">ゲージをタップで一時停止・やめる<br>おじさんをタップするとサボりだす</div>
   <div id="ui" class="screen-home">
     <div id="topRow">
       <div class="card" id="home">
@@ -349,6 +359,7 @@ function defaultStore(){
     lastQuestionDay:null, todayAnswer:null, // 'tough' | 'ok'
     money:0, stageIdx:0,
     lastSessionMin:50,
+    tutorialHome:false, tutorialFocus:false, // 初回だけのチュートリアル表示を出したかどうか
     ojiMateNightSessions:0
   };
 }
@@ -1300,6 +1311,7 @@ function setScreen(s){
   uiEl.classList.add('screen-'+s.toLowerCase());
   backBtn.style.display=(s==='PICK')?'flex':'none';
   focusGaugeEl.classList.remove('open');
+  if(s!=='FOCUS') focusHintEl.classList.remove('show'); // 途中でやめても居座らせない
 }
 function setButtons(){
   bStart.disabled=(state!=='IDLE');
@@ -1329,11 +1341,17 @@ backBtn.onclick=()=>{
 };
 
 // PICK → FOCUS：時間を確定してセッション開始
+const focusHintEl=document.getElementById('focusHint');
 bPickStart.onclick=()=>{
   if(uiScreen!=='PICK') return;
   store.lastSessionMin=SESSION_MIN; saveStore();
   setScreen('FOCUS');
   startSession();
+  if(!store.tutorialFocus){
+    setTimeout(()=>{ focusHintEl.classList.add('show');
+      setTimeout(()=>focusHintEl.classList.remove('show'),5200); }, 900);
+    store.tutorialFocus=true; saveStore();
+  }
 };
 function startSession(){
   sTime=0;setState('FOCUS');say('start');
@@ -1481,8 +1499,11 @@ function runIntro(){
     uiEl.classList.remove('intro');
     waitT=1.2; newWaypoint();
   }, 2300);
-  setTimeout(()=>{ tapHintEl.classList.add('show');
-    setTimeout(()=>tapHintEl.classList.remove('show'),4200); }, 4200);
+  if(!store.tutorialHome){
+    setTimeout(()=>{ tapHintEl.classList.add('show');
+      setTimeout(()=>tapHintEl.classList.remove('show'),4200); }, 4200);
+    store.tutorialHome=true; saveStore();
+  }
 }
 runIntro();
 const clock=new THREE.Clock();

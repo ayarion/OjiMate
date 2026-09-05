@@ -40,6 +40,24 @@
     padding:8px 13px;border-radius:14px;pointer-events:none;z-index:5;
     opacity:0;transition:opacity .4s}
   #focusHint.show{opacity:1}
+
+  /* 初回起動時だけ出す、コンセプト説明の一問一答式チュートリアル */
+  #introTut{position:absolute;inset:0;z-index:50;background:rgba(38,36,31,.6);
+    display:none;align-items:center;justify-content:center;padding:26px;pointer-events:none;
+    opacity:0;transition:opacity .25s}
+  #introTut.show{display:flex;pointer-events:auto;opacity:1}
+  #introTut .tut-card{background:var(--card);border-radius:22px;padding:26px 22px 22px;
+    max-width:270px;width:100%;box-shadow:var(--shadow);text-align:center}
+  #introTut .tut-emoji{font-size:38px;margin-bottom:12px;line-height:1}
+  #introTut h3{margin:0 0 8px;font-size:16.5px}
+  #introTut p{margin:0;font-size:13.5px;line-height:1.65;color:var(--ink-soft)}
+  #tutDots{display:flex;gap:6px;justify-content:center;margin:16px 0 4px}
+  #tutDots span{width:7px;height:7px;border-radius:50%;background:#E5DFD2;transition:background .16s}
+  #tutDots span.on{background:var(--coral)}
+  #introTut .tut-actions{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+  #introTut .btn{width:100%}
+  #tutSkip{background:transparent;box-shadow:none;min-height:36px;color:var(--ink-soft);font-size:12.5px}
+  #tutSkip:active{transform:none;box-shadow:none;opacity:.6}
   /* 起動演出のあいだは下のUIを伏せておく */
   #ui.intro .on-home{opacity:0;transition:opacity .5s}
   #ui:not(.intro) .on-home{opacity:1;transition:opacity .5s}
@@ -82,8 +100,8 @@
   #ui.screen-focus #say.show-confirm{opacity:1}
 
   #backBtn{position:absolute;left:12px;top:12px;z-index:7;pointer-events:auto;
-    width:36px;height:36px;border-radius:50%;border:0;background:var(--card);box-shadow:var(--shadow);
-    font-size:16px;color:var(--ink);cursor:pointer;display:none;align-items:center;justify-content:center}
+    width:44px;height:44px;border-radius:50%;border:0;background:var(--card);box-shadow:var(--shadow);
+    font-size:18px;color:var(--ink);cursor:pointer;display:none;align-items:center;justify-content:center}
   #backBtn:active{transform:translateY(1px)}
 
   /* 正方形のゲージが、タップで長方形に伸びて中に操作を出す */
@@ -135,14 +153,14 @@
     border:2px solid #fff;box-shadow:0 1px 3px rgba(63,58,52,.3);transform:translateX(-50%)}
   #pickTagLabel{font-size:11px;font-weight:700;color:var(--ink-soft);margin:12px 0 6px}
   #pickTags{display:flex;gap:6px;flex-wrap:wrap}
-  #pickTags button{border:0;border-radius:999px;padding:7px 14px;font-family:inherit;font-weight:700;
-    font-size:12.5px;background:#F3EFE8;color:var(--ink-soft);cursor:pointer;transition:.16s}
+  #pickTags button{border:0;border-radius:999px;min-height:40px;padding:10px 18px;font-family:inherit;font-weight:700;
+    font-size:13.5px;background:#F3EFE8;color:var(--ink-soft);cursor:pointer;transition:.16s}
   #pickTags button[aria-pressed="true"]{background:var(--coral);color:#fff}
 
   #stageName{cursor:pointer;-webkit-user-select:none;user-select:none}
   .seg{display:flex;background:#F3EFE8;border-radius:11px;padding:2px;gap:2px;flex:1}
-  .seg button{flex:1;border:0;background:transparent;border-radius:9px;padding:5px 0;font-family:inherit;
-    font-weight:700;font-size:11px;color:var(--ink-soft);cursor:pointer;transition:.16s}
+  .seg button{flex:1;border:0;background:transparent;border-radius:9px;min-height:36px;padding:8px 0;font-family:inherit;
+    font-weight:700;font-size:12px;color:var(--ink-soft);cursor:pointer;transition:.16s}
   .seg button[aria-pressed="true"]{background:var(--sun);color:#6B4A00;box-shadow:0 2px 0 rgba(180,130,10,.28)}
   #say{position:relative;padding:9px 13px;min-height:44px;display:flex;align-items:center}
   #sayName{display:inline-block;font-size:9.5px;font-weight:700;color:#B24E30;background:#FFE7DE;
@@ -150,10 +168,10 @@
   #sayText{font-size:13px;line-height:1.45}
   #say.quiet #sayText{color:var(--ink-soft);font-size:12.5px}
   #ctrl{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:7px}
-  .btn{border:0;border-radius:12px;padding:9px 4px;font-family:inherit;font-weight:700;font-size:12px;
+  .btn{border:0;border-radius:14px;min-height:44px;padding:12px 6px;font-family:inherit;font-weight:700;font-size:13.5px;
     background:#fff;color:var(--ink);cursor:pointer;box-shadow:0 3px 0 rgba(63,58,52,.14);transition:transform .1s,box-shadow .1s}
   .btn:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(63,58,52,.14)}
-  .btn.primary{grid-column:span 3;background:var(--coral);color:#fff;box-shadow:0 3px 0 #D9603F;font-size:13.5px;padding:11px 4px}
+  .btn.primary{grid-column:span 3;background:var(--coral);color:#fff;box-shadow:0 3px 0 #D9603F;font-size:15.5px;min-height:52px;padding:14px 6px}
   .btn.primary:active{box-shadow:0 1px 0 #D9603F}
   .btn.sky{background:var(--sky);color:#0C4E66;box-shadow:0 3px 0 #3EA6C9}
   .btn.sky:active{box-shadow:0 1px 0 #3EA6C9}
@@ -264,6 +282,18 @@
   <button id="backBtn" aria-label="戻る">←</button>
   <div id="tapHint">家をタップすると今の状況が見られます</div>
   <div id="focusHint">ゲージをタップで一時停止・やめる<br>おじさんをタップするとサボりだす</div>
+  <div id="introTut" role="dialog" aria-modal="true" aria-label="OjiMateの使い方">
+    <div class="tut-card">
+      <div class="tut-emoji" id="tutEmoji">🏚️</div>
+      <h3 id="tutTitle"></h3>
+      <p id="tutText"></p>
+      <div id="tutDots"></div>
+      <div class="tut-actions">
+        <button class="btn primary" id="tutNext">次へ</button>
+        <button class="btn" id="tutSkip">スキップ</button>
+      </div>
+    </div>
+  </div>
   <div id="ui" class="screen-home">
     <div id="topRow">
       <div class="card" id="home">
@@ -359,7 +389,7 @@ function defaultStore(){
     lastQuestionDay:null, todayAnswer:null, // 'tough' | 'ok'
     money:0, stageIdx:0,
     lastSessionMin:50,
-    tutorialHome:false, tutorialFocus:false, // 初回だけのチュートリアル表示を出したかどうか
+    tutorialHome:false, tutorialFocus:false, tutorialIntro:false, // 初回だけのチュートリアル表示を出したかどうか
     ojiMateNightSessions:0
   };
 }
@@ -1506,6 +1536,47 @@ function runIntro(){
   }
 }
 runIntro();
+
+// ===== 初回だけの導入チュートリアル：表裏一体の仕組みをステップで説明する =====
+// タイトル画面（#ttFrame）が消えた直後、第2の<script>から showIntroTutorial() を呼ぶ。
+// runIntro自体はタイトルの裏で即座に走るため、ここでは別フラグ(tutorialIntro)で
+// 「タイトルを抜けたあとのユーザー向け」表示だけを独立に一度だけ出す。
+const TUTORIAL_STEPS=[
+  {emoji:'🏚️', title:'おじさんは、もう一人の自分', text:'集中すればおじさんも机に向かい、サボればおじさんも一緒にサボりだす。表裏一体の相棒。'},
+  {emoji:'🏠', title:'家をタップしてみて', text:'所持金・経過日数・これまでの記録が見られる。集中した時間はそのままお金になり、住む家が育っていく。'},
+  {emoji:'⏱️', title:'「一緒に始める」で開始', text:'時間とタグを選んでセッションを始める。ゲージをタップすると一時停止・やめるが出せる。'},
+  {emoji:'📱', title:'サボりたくなったら', text:'おじさんをタップすると、一緒にスマホを触りだす。戻したいときはもう一度タップ。'},
+];
+const introTutEl=document.getElementById('introTut');
+const tutDotsEl=document.getElementById('tutDots');
+const tutEmojiEl=document.getElementById('tutEmoji');
+const tutTitleEl=document.getElementById('tutTitle');
+const tutTextEl=document.getElementById('tutText');
+const tutNextEl=document.getElementById('tutNext');
+let tutStep=0;
+function renderTutStep(){
+  const s=TUTORIAL_STEPS[tutStep];
+  tutEmojiEl.textContent=s.emoji;
+  tutTitleEl.textContent=s.title;
+  tutTextEl.textContent=s.text;
+  tutDotsEl.innerHTML=TUTORIAL_STEPS.map((_,i)=>`<span class="${i===tutStep?'on':''}"></span>`).join('');
+  tutNextEl.textContent=(tutStep===TUTORIAL_STEPS.length-1)?'はじめる':'次へ';
+}
+function closeIntroTutorial(){
+  introTutEl.classList.remove('show');
+  store.tutorialIntro=true; saveStore();
+}
+tutNextEl.addEventListener('click', ()=>{
+  if(tutStep>=TUTORIAL_STEPS.length-1){ closeIntroTutorial(); return; }
+  tutStep++; renderTutStep();
+});
+document.getElementById('tutSkip').addEventListener('click', closeIntroTutorial);
+function showIntroTutorial(){
+  if(store.tutorialIntro) return;
+  tutStep=0; renderTutStep();
+  introTutEl.classList.add('show');
+}
+
 const clock=new THREE.Clock();
 function tick(){
   const dt=Math.min(0.05,clock.getDelta()), t=clock.elapsedTime;
@@ -2071,6 +2142,7 @@ tick();
       stopped=true;
       try{ renderer.dispose(); }catch(e){}
       ttFrame.remove();
+      showIntroTutorial();
     },560);
   });
 

@@ -7,7 +7,7 @@
 <meta name="description" content="集中するとおじさんも働く、サボるとおじさんもサボる。表裏一体の相棒と暮らす集中アプリ OjiMate の画面デモ。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=Outfit:wght@600;700&display=swap" rel="stylesheet">
 <style>
   :root{--ink:#3F3A34;--ink-soft:#9B8F80;--sun:#FFC64B;--sky:#6FCBEE;--coral:#FF8A6B;--mint:#4FCFAE;--grape:#B08BF0;
     --card:rgba(255,255,255,.94);--shadow:0 3px 0 rgba(63,58,52,.09),0 6px 16px rgba(63,58,52,.10)}
@@ -158,10 +158,98 @@
     color:#B27A18;text-shadow:0 2px 0 #fff;opacity:0;pointer-events:none}
   #coin.go{animation:rise 1.5s ease-out}
   @keyframes rise{0%{opacity:0;transform:translate(-50%,10px)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-50px)}}
+
+  /* ===== タイトル画面（起動時のオーバーレイ、STARTでホームへ） ===== */
+  #ttFrame{position:absolute;inset:0;z-index:40;overflow:hidden;
+    background:linear-gradient(180deg,#6FB9E4 0%,#A6DCEF 28%,#FFE3B8 42%);
+    transition:opacity .5s ease}
+  #ttFrame.tt-hide{opacity:0;pointer-events:none}
+  #ttRays{position:absolute;left:50%;top:28%;width:250%;aspect-ratio:1;transform:translate(-50%,-50%);
+    background:repeating-conic-gradient(from 0deg,rgba(255,255,255,.26) 0deg 5deg,rgba(255,255,255,0) 5deg 14deg);
+    -webkit-mask-image:radial-gradient(circle,rgba(0,0,0,.24) 0%,#000 24%,rgba(0,0,0,.46) 46%,transparent 74%);
+    mask-image:radial-gradient(circle,rgba(0,0,0,.24) 0%,#000 24%,rgba(0,0,0,.46) 46%,transparent 74%);
+    animation:ttSpin 90s linear infinite;pointer-events:none}
+  @keyframes ttSpin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+  .tt-cloud{position:absolute;background:rgba(255,255,255,.9);border-radius:999px;pointer-events:none}
+  .tt-cloud::before,.tt-cloud::after{content:"";position:absolute;background:inherit;border-radius:999px}
+  #ttC1{left:-8%;top:5%;width:34%;height:4.2%;opacity:.75;animation:ttDrift 46s linear infinite}
+  #ttC1::before{width:52%;height:150%;left:16%;top:-72%}
+  #ttC1::after{width:34%;height:120%;left:56%;top:-52%}
+  #ttC2{right:-10%;top:30%;width:36%;height:3.8%;opacity:.55;animation:ttDrift 62s linear infinite reverse}
+  #ttC2::before{width:46%;height:145%;left:22%;top:-70%}
+  #ttC2::after{width:30%;height:112%;left:8%;top:-46%}
+  @keyframes ttDrift{from{transform:translateX(-14%)}to{transform:translateX(14%)}}
+  #ttLand{position:absolute;left:-16%;right:-16%;top:38%;bottom:-6%;
+    background:radial-gradient(120% 78% at 50% 0%,#9BC271 0%,#82AD5C 52%,#6B944A 100%);
+    border-radius:50% 50% 0 0 / 22% 22% 0 0;pointer-events:none}
+  #ttLandShade{position:absolute;left:-16%;right:-16%;top:38%;bottom:-6%;
+    background:radial-gradient(60% 26% at 22% 32%,rgba(255,255,255,.16),transparent 70%),
+      radial-gradient(52% 22% at 78% 50%,rgba(255,255,255,.12),transparent 70%),
+      linear-gradient(180deg,rgba(255,255,255,.14) 0%,transparent 26%,rgba(50,70,36,.16) 100%);
+    border-radius:50% 50% 0 0 / 22% 22% 0 0;pointer-events:none}
+  #ttLandEdge{position:absolute;left:-16%;right:-16%;top:38%;height:14%;
+    border-radius:50% 50% 0 0 / 62% 62% 0 0;box-shadow:inset 0 7px 0 rgba(255,255,255,.26);pointer-events:none}
+  .tt-tuft{position:absolute;pointer-events:none;border-radius:60% 60% 40% 40%/90% 90% 12% 12%;background:#6B944A}
+  #ttStage{position:absolute;inset:0}
+  #ttStage canvas{display:block}
+  #ttLogo{position:absolute;left:0;right:0;top:6%;display:flex;flex-direction:column;align-items:center;gap:2px;
+    pointer-events:none;z-index:3;animation:ttLogoIn .85s cubic-bezier(.2,1.5,.5,1) both}
+  @keyframes ttLogoIn{from{transform:translateY(-10px) scale(.9)}to{transform:none}}
+  #ttLogoMain{width:min(102%,470px);height:auto;display:block;
+    filter:drop-shadow(0 9px 0 rgba(90,62,0,.24)) drop-shadow(0 14px 26px rgba(31,53,66,.36))}
+  #ttLogoSub{width:min(94%,400px);height:auto;display:block;margin-top:-2px;
+    filter:drop-shadow(0 3px 0 rgba(90,62,0,.28)) drop-shadow(0 6px 14px rgba(31,53,66,.3))}
+  #ttStart{position:absolute;left:50%;bottom:5%;transform:translateX(-50%);
+    font-family:"Outfit","Zen Maru Gothic",system-ui,sans-serif;font-weight:700;
+    font-size:clamp(22px,6.6vw,31px);letter-spacing:.16em;color:#fff;background:#FF8A6B;
+    border:0;border-radius:999px;padding:18px 62px 18px 70px;cursor:pointer;
+    box-shadow:0 6px 0 #D9603F,0 14px 30px rgba(31,53,66,.36);z-index:3;animation:ttBreathe 2.6s ease-in-out infinite}
+  #ttStart:active{transform:translateX(-50%) translateY(4px);box-shadow:0 2px 0 #D9603F,0 8px 18px rgba(31,53,66,.3)}
+  #ttStart:focus-visible{outline:3px solid #fff;outline-offset:4px}
+  @keyframes ttBreathe{0%,100%{transform:translateX(-50%)}50%{transform:translateX(-50%) translateY(-4px)}}
+  @media (prefers-reduced-motion:reduce){#ttRays,#ttC1,#ttC2,#ttLogo,#ttStart{animation:none}}
 </style>
 </head>
 <body>
 <div id="phone">
+  <div id="ttFrame">
+    <div id="ttRays"></div>
+    <div class="tt-cloud" id="ttC1"></div>
+    <div class="tt-cloud" id="ttC2"></div>
+    <div id="ttLand"></div>
+    <div id="ttLandShade"></div>
+    <div id="ttLandEdge"></div>
+    <div id="ttStage"></div>
+
+    <div id="ttLogo">
+      <svg id="ttLogoMain" viewBox="0 0 400 128" aria-label="OjiMate">
+        <defs>
+          <linearGradient id="ttShine" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#FFEFB8"/>
+            <stop offset="50%" stop-color="#FFC64B"/>
+            <stop offset="100%" stop-color="#EE9C24"/>
+          </linearGradient>
+        </defs>
+        <g transform="scale(1,1.2)">
+          <text x="200" y="74" text-anchor="middle"
+                font-family="Zen Maru Gothic, sans-serif" font-size="90" font-weight="700"
+                paint-order="stroke" stroke="#5A3E00" stroke-width="24" stroke-linejoin="round"
+                fill="#FFC64B">OjiMate</text>
+          <text x="200" y="74" text-anchor="middle"
+                font-family="Zen Maru Gothic, sans-serif" font-size="90" font-weight="700"
+                fill="url(#ttShine)">OjiMate</text>
+        </g>
+      </svg>
+      <svg id="ttLogoSub" viewBox="0 0 470 60" aria-label="おぢさんと一蓮托生">
+        <text x="235" y="43" text-anchor="middle"
+              font-family="Zen Maru Gothic, sans-serif" font-size="41" font-weight="700"
+              paint-order="stroke" stroke="#5A3E00" stroke-width="12" stroke-linejoin="round"
+              fill="#FFF4DC">～おぢさんと一蓮托生～</text>
+      </svg>
+    </div>
+
+    <button id="ttStart" type="button">START</button>
+  </div>
   <div id="stage"></div>
   <div id="coin"></div>
   <button id="backBtn" aria-label="戻る">←</button>
@@ -1612,6 +1700,405 @@ function tick(){
   requestAnimationFrame(tick);
 }
 tick();
+</script>
+
+<!-- ===== タイトル画面：起動時のオーバーレイ。独立した3Dシーンなので、下の本体アプリとは完全に隔離してIIFEに包む ===== -->
+<script>
+(function(){
+  const ttFrame=document.getElementById('ttFrame');
+
+  for(let i=0;i<34;i++){
+    const t=document.createElement('div'); t.className='tt-tuft';
+    const depth=Math.random(), w=5+depth*11;
+    t.style.width=w+'px'; t.style.height=(w*1.5)+'px';
+    t.style.left=(2+Math.random()*96)+'%';
+    t.style.top=(40+depth*56)+'%';
+    t.style.opacity=(0.2+depth*0.34).toFixed(2);
+    ttFrame.insertBefore(t,document.getElementById('ttStage'));
+  }
+
+  const C={
+    skin:0xE8BE96, skinD:0xD0A379, shirt:0xF3F0E8, pants:0xF1EEE4,
+    hair:0x6B5B4E, haramaki:0xADA079,
+    wallOld:0x9B9082, roofOld:0x6E675C, rust:0x8A6B4E, woodOld:0x86735C,
+    wood:0xB4906A, glass:0x8FB6BE, metal:0x8E949A
+  };
+
+  const host=ttFrame;
+  const scene=new THREE.Scene();
+  let W=host.clientWidth||400,H=host.clientHeight||711;
+
+  const FRUST=3.6;
+  const camera=new THREE.OrthographicCamera(-FRUST*W/H/2,FRUST*W/H/2,FRUST/2,-FRUST/2,0.1,120);
+  const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  document.getElementById('ttStage').appendChild(renderer.domElement);
+
+  scene.add(new THREE.HemisphereLight(0xEAF6FF,0x93AE70,0.78));
+  const sun=new THREE.DirectionalLight(0xFFF3DE,0.72); sun.position.set(3,6,5); scene.add(sun);
+  const rim=new THREE.DirectionalLight(0xFFE2B0,0.34); rim.position.set(-4,2.5,-4); scene.add(rim);
+
+  const mat=c=>new THREE.MeshLambertMaterial({color:c});
+  function box(w,h,d,c){return new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c));}
+  function cyl(rt,rb,h,c,s=32){return new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,s),mat(c));}
+  function sph(r,c,s=40){return new THREE.Mesh(new THREE.SphereGeometry(r,s,Math.round(s*0.75)),mat(c));}
+  function cone(r,h,c,s=18){return new THREE.Mesh(new THREE.ConeGeometry(r,h,s),mat(c));}
+  function put(p,m,x,y,z){m.position.set(x,y,z);p.add(m);return m;}
+  const rnd=(a,b)=>a+Math.random()*(b-a);
+
+  const world=new THREE.Group(); scene.add(world);
+
+  function shadowBlob(w,d,x,z,op){
+    const cv=document.createElement('canvas'); cv.width=cv.height=128;
+    const cx=cv.getContext('2d');
+    const g=cx.createRadialGradient(64,64,4,64,64,62);
+    g.addColorStop(0,'rgba(56,74,42,'+(op||0.4)+')'); g.addColorStop(1,'rgba(56,74,42,0)');
+    cx.fillStyle=g; cx.fillRect(0,0,128,128);
+    const m=new THREE.Mesh(new THREE.PlaneGeometry(w,d),
+      new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(cv),transparent:true,depthWrite:false}));
+    m.rotation.x=-Math.PI/2; put(world,m,x,0.012,z);
+    return m;
+  }
+
+  // ===== おじさん =====
+  const poseRoot=new THREE.Group(); world.add(poseRoot);
+  const lieRoot=new THREE.Group(); poseRoot.add(lieRoot);
+  const man=new THREE.Group(); lieRoot.add(man);
+  const bodyPivot=new THREE.Group(); man.add(bodyPivot);
+  const headPivot=new THREE.Group(); headPivot.position.y=0.86; bodyPivot.add(headPivot);
+
+  const belly=sph(0.44,C.shirt,52); belly.scale.set(1.05,0.92,0.88); put(bodyPivot,belly,0,0.62,0);
+  const bellyLow=sph(0.42,C.shirt,44); bellyLow.scale.set(1.0,0.72,0.9); put(bodyPivot,bellyLow,0,0.42,0.04);
+  put(bodyPivot,cyl(0.4,0.38,0.2,C.pants,40),0,0.24,0);
+  put(bodyPivot,box(0.66,0.06,0.5,0x4A566A),0,0.33,0);
+
+  function stripeTex(){
+    const cvs=document.createElement('canvas'); cvs.width=32; cvs.height=8;
+    const cx=cvs.getContext('2d');
+    cx.fillStyle='#fff'; cx.fillRect(0,0,32,8);
+    cx.fillStyle='rgba(0,0,0,0.22)';
+    for(let x=0;x<32;x+=8) cx.fillRect(x,0,2,8);
+    const t=new THREE.CanvasTexture(cvs);
+    t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(14,1);
+    return t;
+  }
+  const haramaki=new THREE.Mesh(new THREE.TorusGeometry(0.40,0.085,18,44),
+    new THREE.MeshLambertMaterial({color:C.haramaki,map:stripeTex()}));
+  haramaki.rotation.x=Math.PI/2; haramaki.scale.set(1,1,0.85);
+  put(bodyPivot,haramaki,0,0.52,0.01);
+
+  const head=sph(0.36,C.skin,52); head.scale.set(1,0.95,0.96);
+  head.material=new THREE.MeshPhongMaterial({color:C.skin,specular:0x4A3B2C,shininess:22});
+  put(headPivot,head,0,0.26,0);
+  const hairL=sph(0.19,C.hair,26); hairL.scale.set(0.5,0.6,0.9); put(headPivot,hairL,-0.33,0.16,0);
+  const hairR=sph(0.19,C.hair,26); hairR.scale.set(0.5,0.6,0.9); put(headPivot,hairR,0.33,0.16,0);
+  const hairB=sph(0.2,C.hair,24); hairB.scale.set(0.85,0.42,0.5); put(headPivot,hairB,0,0.12,-0.27);
+  put(headPivot,sph(0.09,C.skinD,20),-0.35,0.24,0).scale.set(0.5,1,0.8);
+  put(headPivot,sph(0.09,C.skinD,20),0.35,0.24,0).scale.set(0.5,1,0.8);
+  put(headPivot,box(0.1,0.026,0.02,0x3A322B),-0.13,0.29,0.315);
+  put(headPivot,box(0.1,0.026,0.02,0x3A322B),0.13,0.29,0.315);
+  put(headPivot,sph(0.07,C.skinD,18),0,0.21,0.35);
+  const stub=sph(0.3,0xBFA089,32); stub.scale.set(0.95,0.42,0.7); put(headPivot,stub,0,0.08,0.12);
+  const browL=box(0.15,0.032,0.03,0x5A4B3F); browL.rotation.z=0.1; put(headPivot,browL,-0.11,0.375,0.32);
+  const browR=box(0.15,0.032,0.03,0x5A4B3F); browR.rotation.z=-0.1; put(headPivot,browR,0.11,0.375,0.32);
+  const mouth=box(0.14,0.028,0.02,0x6B4A42); put(headPivot,mouth,0,0.09,0.35);
+
+  const cig=new THREE.Group(); headPivot.add(cig);
+  const cigStick=cyl(0.019,0.019,0.2,0xF2EDE2,12); cigStick.rotation.z=Math.PI/2;
+  put(cig,cigStick,0.15,0.10,0.345);
+  const emberMat=new THREE.MeshBasicMaterial({color:0xE0642A});
+  put(cig,new THREE.Mesh(new THREE.SphereGeometry(0.028,12,10),emberMat),0.255,0.10,0.345);
+
+  const sparkleMat=new THREE.MeshBasicMaterial({color:0xFFFFFF,transparent:true,opacity:0.8});
+  const sparkle=new THREE.Group();
+  put(sparkle,new THREE.Mesh(new THREE.BoxGeometry(0.17,0.024,0.024),sparkleMat),0,0,0);
+  put(sparkle,new THREE.Mesh(new THREE.BoxGeometry(0.024,0.17,0.024),sparkleMat),0,0,0);
+  put(sparkle,new THREE.Mesh(new THREE.BoxGeometry(0.09,0.015,0.015),sparkleMat),0.09,0.09,0);
+  sparkle.position.set(0.04,0.45,0.13); headPivot.add(sparkle);
+
+  function arm(sx){
+    const up=new THREE.Group(); up.position.set(sx*0.52,0.80,0.05); bodyPivot.add(up);
+    put(up,sph(0.115,C.skin,26),0,0,0);
+    put(up,cyl(0.115,0.082,0.30,C.skin,26),0,-0.15,0);
+    put(up,sph(0.095,C.skin,26),0,-0.30,0);
+    const fore=new THREE.Group(); fore.position.y=-0.30; up.add(fore);
+    put(fore,cyl(0.082,0.075,0.26,C.skin,26),0,-0.13,0);
+    put(fore,sph(0.098,C.skin,26),0,-0.28,0);
+    for(let i=-1;i<=1;i++) put(fore,box(0.032,0.12,0.045,C.skin),i*0.045,-0.40,0.01);
+    return {up,fore};
+  }
+  const aL=arm(-1), aR=arm(1);
+  function leg(sx){
+    const up=new THREE.Group(); up.position.set(sx*0.19,0.24,0); bodyPivot.add(up);
+    put(up,cyl(0.115,0.1,0.22,C.skin,26),0,-0.11,0);
+    const sh=new THREE.Group(); sh.position.y=-0.22; up.add(sh);
+    put(sh,cyl(0.095,0.088,0.2,C.skin,26),0,-0.1,0);
+    put(sh,box(0.17,0.07,0.28,0x6B5B4E),0,-0.21,0.05);
+    return {up,sh};
+  }
+  const lL=leg(-1), lR=leg(1);
+
+  // ===== 二関節の逆運動学：手先の目標座標から肩・肘の角度を解く =====
+  const DOWN=new THREE.Vector3(0,-1,0);
+  function solveLimb(root,joint,L1,L2,target,pole){
+    const S=root.position;
+    const toT=new THREE.Vector3().subVectors(target,S);
+    const d=Math.min(toT.length(),(L1+L2)*0.995);
+    const dir=toT.clone().normalize();
+    const cosA=THREE.MathUtils.clamp((L1*L1+d*d-L2*L2)/(2*L1*d),-1,1);
+    const a=Math.acos(cosA);
+    const n=new THREE.Vector3().crossVectors(dir,pole.clone().normalize());
+    if(n.lengthSq()<1e-6) n.set(0,0,1); else n.normalize();
+    const upperDir=dir.clone().applyAxisAngle(n,a);
+    const q1=new THREE.Quaternion().setFromUnitVectors(DOWN,upperDir);
+    root.quaternion.copy(q1);
+    const elbow=S.clone().add(upperDir.multiplyScalar(L1));
+    const foreDir=new THREE.Vector3().subVectors(target,elbow).normalize();
+    const foreLocal=foreDir.applyQuaternion(q1.clone().invert());
+    joint.quaternion.copy(new THREE.Quaternion().setFromUnitVectors(DOWN,foreLocal));
+  }
+
+  // ===== 肘枕の姿勢 =====
+  lieRoot.rotation.z=1.18;
+  poseRoot.position.set(1.06,0.40,0.35);
+  poseRoot.rotation.y=-0.12;
+
+  headPivot.rotation.x=-0.06;
+  headPivot.rotation.y=0.16;
+  headPivot.rotation.z=-0.24;
+
+  solveLimb(aL.up,aL.fore,0.30,0.40,
+    new THREE.Vector3(-0.30,0.99,0.20), new THREE.Vector3(-1,-0.25,-0.2));
+  solveLimb(aR.up,aR.fore,0.30,0.40,
+    new THREE.Vector3(0.30,0.36,0.34), new THREE.Vector3(1,0.1,0.6));
+  lL.up.rotation.set(-0.52,0,0.12); lL.sh.rotation.x=1.05;
+  lR.up.rotation.set(-0.30,0,-0.06); lR.sh.rotation.x=0.86;
+
+  shadowBlob(2.0,0.95,0.55,0.42,0.42);
+
+  const smokeGroup=new THREE.Group(); world.add(smokeGroup);
+  const puffs=[];
+  for(let i=0;i<9;i++){
+    const m=new THREE.Mesh(new THREE.SphereGeometry(0.07,14,10),
+      new THREE.MeshLambertMaterial({color:0xE8E4DA,transparent:true,opacity:0}));
+    smokeGroup.add(m); puffs.push({m,t:i/9,sway:rnd(-1,1)});
+  }
+  const mouthWorld=new THREE.Vector3();
+
+  // ===== 小物 =====
+  const props=[];
+  function addProp(obj,x,y,z,rot,scale,float){
+    const g=new THREE.Group();
+    g.add(obj); g.position.set(x,y,z); g.rotation.set(rot[0],rot[1],rot[2]);
+    g.scale.setScalar(scale||1); world.add(g);
+    props.push({g,base:new THREE.Vector3(x,y,z),s:scale||1,phase:Math.random()*6.28,
+      amp:float?0.045:0,rot0:g.rotation.z,spin:float?0.08:0});
+    return g;
+  }
+  function propLaptop(){
+    const g=new THREE.Group();
+    put(g,box(0.56,0.03,0.34,C.metal),0,0,0);
+    const lid=new THREE.Group(); lid.position.set(0,0.01,0.16); g.add(lid);
+    put(lid,box(0.56,0.30,0.02,C.metal),0,0.15,0);
+    put(lid,new THREE.Mesh(new THREE.BoxGeometry(0.49,0.24,0.012),
+      new THREE.MeshBasicMaterial({color:0xD6EFA6})),0,0.15,-0.018);
+    lid.rotation.x=0.52;
+    return g;
+  }
+  function propChabudai(){
+    const g=new THREE.Group();
+    put(g,box(0.78,0.05,0.42,C.wood),0,0.22,0);
+    [[-0.32,-0.15],[0.32,-0.15],[-0.32,0.15],[0.32,0.15]].forEach(p=>put(g,box(0.05,0.22,0.05,C.woodOld),p[0],0.1,p[1]));
+    put(g,cyl(0.075,0.085,0.12,0xE0DCD0,18),-0.22,0.3,0.04);
+    put(g,cyl(0.13,0.13,0.035,0x6E675C,18),0.2,0.26,0.02);
+    put(g,box(0.2,0.03,0.14,0xE8E2D2),-0.02,0.26,-0.1);
+    return g;
+  }
+  function propCoin(){
+    const cv=document.createElement('canvas'); cv.width=cv.height=128;
+    const cx=cv.getContext('2d');
+    cx.fillStyle='#F5C24B'; cx.fillRect(0,0,128,128);
+    cx.fillStyle='#FFE39B'; cx.beginPath(); cx.arc(64,64,50,0,6.29); cx.fill();
+    cx.fillStyle='#8A6218'; cx.font='bold 74px sans-serif';
+    cx.textAlign='center'; cx.textBaseline='middle'; cx.fillText('¥',64,68);
+    const face=new THREE.MeshLambertMaterial({map:new THREE.CanvasTexture(cv)});
+    const side=new THREE.MeshLambertMaterial({color:0xE0AC38});
+    const m=new THREE.Mesh(new THREE.CylinderGeometry(0.2,0.2,0.055,34),[side,face,face]);
+    m.rotation.x=Math.PI/2;
+    const g=new THREE.Group(); g.add(m); return g;
+  }
+  function propClock(){
+    const g=new THREE.Group();
+    const body=cyl(0.19,0.19,0.09,0xE6E1D4,30); body.rotation.x=Math.PI/2; g.add(body);
+    const face=cyl(0.155,0.155,0.02,0xFFFDF4,28); face.rotation.x=Math.PI/2; put(g,face,0,0,0.055);
+    put(g,box(0.02,0.1,0.012,0x3F3A34),0,0.045,0.07);
+    const hand=box(0.075,0.018,0.012,0xC4633F); hand.rotation.z=-0.5; put(g,hand,0.03,0.015,0.07);
+    put(g,sph(0.06,0xC9C2B2,16),-0.15,0.15,0);
+    put(g,sph(0.06,0xC9C2B2,16),0.15,0.15,0);
+    return g;
+  }
+  function propRubble(){
+    const g=new THREE.Group();
+    const a=box(0.3,0.17,0.24,0x9A9488); a.rotation.set(0.3,0.5,0.15); g.add(a);
+    const b=box(0.18,0.12,0.15,0x82837E); b.position.set(0.19,-0.04,0.08); b.rotation.set(0.6,0.2,0.4); g.add(b);
+    const r=cyl(0.014,0.014,0.3,C.rust,8); r.position.set(0.02,0.13,0); r.rotation.set(0.4,0,0.7); g.add(r);
+    return g;
+  }
+  function propCrate(){
+    const g=new THREE.Group();
+    put(g,box(0.42,0.3,0.34,C.woodOld),0,0.15,0);
+    put(g,box(0.44,0.04,0.36,C.wood),0,0.29,0);
+    put(g,box(0.44,0.04,0.36,C.wood),0,0.08,0);
+    put(g,box(0.34,0.22,0.3,0xC9A97A),0.03,0.44,-0.02).rotation.y=0.4;
+    return g;
+  }
+  function propBucket(){
+    const g=new THREE.Group();
+    put(g,cyl(0.15,0.11,0.26,0x8FA2A8,20),0,0.13,0);
+    put(g,cyl(0.145,0.145,0.02,0x7A8C92,20),0,0.26,0);
+    const handle=new THREE.Mesh(new THREE.TorusGeometry(0.14,0.012,8,20,Math.PI),mat(0x7A8C92));
+    handle.rotation.y=Math.PI/2; put(g,handle,0,0.27,0);
+    return g;
+  }
+  function propBottle(){
+    const g=new THREE.Group();
+    put(g,cyl(0.075,0.085,0.34,0x4E6B4A,16),0,0.17,0);
+    put(g,cyl(0.03,0.045,0.14,0x4E6B4A,14),0,0.4,0);
+    put(g,cyl(0.034,0.034,0.03,0xC9B27A,14),0,0.48,0);
+    put(g,box(0.09,0.14,0.005,0xEFE7D2),0,0.19,0.078);
+    return g;
+  }
+  function propPole(){
+    const g=new THREE.Group();
+    put(g,cyl(0.055,0.07,2.5,0x9A9488,14),0,1.25,0);
+    put(g,box(0.7,0.045,0.045,0x6B655C),0,2.32,0);
+    put(g,box(0.5,0.04,0.04,0x6B655C),0,2.12,0);
+    put(g,cyl(0.04,0.04,0.16,0x3F3A34,10),-0.26,2.24,0);
+    put(g,cyl(0.04,0.04,0.16,0x3F3A34,10),0.26,2.24,0);
+    return g;
+  }
+  function propCat(){
+    const g=new THREE.Group();
+    const body=sph(0.17,0xB6A692,22); body.scale.set(1,0.95,1.25); put(g,body,0,0.17,0);
+    const headC=sph(0.12,0xB6A692,22); put(g,headC,0,0.36,0.08);
+    put(g,cone(0.05,0.09,0xB6A692,10),-0.07,0.45,0.07);
+    put(g,cone(0.05,0.09,0xB6A692,10),0.07,0.45,0.07);
+    put(g,sph(0.022,0x3A322B,10),-0.045,0.36,0.185);
+    put(g,sph(0.022,0x3A322B,10),0.045,0.36,0.185);
+    const tail=cyl(0.025,0.02,0.3,0xB6A692,10); tail.rotation.x=-0.9; put(g,tail,0,0.2,-0.2);
+    put(g,box(0.28,0.06,0.1,0xB6A692),0,0.04,0.14);
+    return g;
+  }
+  function propHouse(){
+    const g=new THREE.Group();
+    const t=0.1, w=1.5, h=1.0, d=1.1;
+    put(g,box(w,h,t,C.wallOld),0,h/2,-d/2);
+    put(g,box(t,h,d,C.wallOld),-w/2,h/2,0);
+    put(g,box(t,h,d,C.wallOld),w/2,h/2,0);
+    put(g,box(w,0.06,d,0x8A7A5E),0,0.03,0);
+    put(g,box(w,0.16,t,C.wallOld),0,0.08,d/2);
+    put(g,box(w+0.2,0.11,d+0.18,C.roofOld),0,h+0.055,0);
+    put(g,box(0.42,0.04,0.26,C.wood),-0.2,0.24,0.1);
+    put(g,box(0.3,0.24,0.22,0x6E675C),0.42,0.15,-0.2);
+    put(g,new THREE.Mesh(new THREE.BoxGeometry(0.22,0.16,0.01),
+      new THREE.MeshBasicMaterial({color:0xBFE3F2})),0.42,0.17,-0.08);
+    put(g,box(0.3,0.2,0.04,C.rust),0.42,0.44,-d/2+0.06);
+    put(g,box(0.2,0.3,0.04,C.rust),-0.5,0.68,-d/2+0.06);
+    const ant=cyl(0.02,0.02,0.55,0x6B655C,8); ant.rotation.z=0.22; put(g,ant,0.45,1.37,-0.2);
+    put(g,box(0.34,0.02,0.02,0x6B655C),0.53,1.62,-0.2);
+    const pole=cyl(0.018,0.018,0.95,0xB9B4A8,8); pole.rotation.z=Math.PI/2; put(g,pole,0,0.74,d/2+0.04);
+    put(g,box(0.2,0.26,0.02,0xE4E0D4),-0.22,0.61,d/2+0.05);
+    put(g,box(0.17,0.22,0.02,0xC9CDBE),0.1,0.63,d/2+0.05);
+    return g;
+  }
+
+  addProp(propHouse(),  -1.07,0,-2.6,[0,-0.34,0],0.56);
+  addProp(propPole(),   -1.02,0,-0.9,[0,0.2,0],0.5);
+  addProp(propChabudai(),0.05,0,0.95,[0,0.34,0],0.7);
+  addProp(propCat(),    -0.52,0,0.55,[0,0.7,0],0.85);
+  addProp(propCrate(),   0.62,0,-0.25,[0,-0.4,0],0.7);
+  addProp(propBucket(), -0.38,0,-0.75,[0,0.3,0],0.7);
+  addProp(propBottle(),  0.34,0,0.62,[0,0.2,0],0.75);
+  addProp(propRubble(), -0.72,0,-1.35,[0,0.4,0],0.7);
+  addProp(propRubble(),  0.5,0,-1.6,[0,-0.5,0],0.6);
+  addProp(propLaptop(), -0.55,1.45,0.5,[0.18,Math.PI+0.16,0.1],0.85,true);
+  addProp(propClock(),   0.62,1.5,0.4,[0.08,-0.25,-0.2],0.68,true);
+  addProp(propCoin(),    0.85,1.05,0.7,[0.35,0.2,0.28],0.75,true);
+  addProp(propCoin(),   -0.62,1.12,0.85,[0.2,-0.3,-0.25],0.6,true);
+
+  [[-1.07,-2.6,1.3,0.28],[-1.02,-0.9,0.35,0.3],[0.05,0.95,0.85,0.3],
+   [0.62,-0.25,0.5,0.26],[-0.38,-0.75,0.36,0.24],[0.34,0.62,0.3,0.22],
+   [-0.52,0.55,0.4,0.24]].forEach(o=>shadowBlob(o[2],o[2]*0.5,o[0],o[1],o[3]));
+
+  function updCam(){
+    const f=FRUST;
+    camera.left=-f*W/H/2;camera.right=f*W/H/2;camera.top=f/2;camera.bottom=-f/2;
+    camera.position.set(1.6,2.7,6.2);
+    camera.lookAt(0.05,1.0,0.3);
+    camera.updateProjectionMatrix();
+  }
+  function resize(){ W=host.clientWidth;H=host.clientHeight; renderer.setSize(W,H); updCam(); }
+  addEventListener('resize',resize); resize();
+
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let intro=reduce?1:0, drag=-1, stopped=false;
+
+  document.getElementById('ttStart').addEventListener('click',()=>{
+    drag=0;
+    ttFrame.classList.add('tt-hide');
+    setTimeout(()=>{
+      stopped=true;
+      try{ renderer.dispose(); }catch(e){}
+      ttFrame.remove();
+    },560);
+  });
+
+  const clockT=new THREE.Clock();
+  function tick(){
+    if(stopped) return;
+    const dt=Math.min(0.05,clockT.getDelta()), t=clockT.elapsedTime;
+    if(intro<1) intro=Math.min(1,intro+dt/0.9);
+    const e=1-Math.pow(1-intro,3);
+
+    bodyPivot.position.z=reduce?0:Math.sin(t*1.05)*0.013;
+
+    let puff=0;
+    if(drag>=0){
+      drag+=dt;
+      puff=Math.sin(Math.min(1,drag/1.1)*Math.PI);
+      if(drag>1.1) drag=-1;
+    }
+    emberMat.color.setHSL(0.045,0.85,0.42+0.2*(reduce?0.5:Math.abs(Math.sin(t*0.9)))+puff*0.25);
+    headPivot.rotation.x=-0.06-puff*0.1;
+
+    sparkleMat.opacity=reduce?0.75:0.45+Math.abs(Math.sin(t*1.05))*0.45;
+    sparkle.rotation.z=t*0.6;
+    sparkle.scale.setScalar(0.8+Math.sin(t*1.05)*0.16);
+
+    mouth.getWorldPosition(mouthWorld);
+    puffs.forEach(p=>{
+      p.t+=dt*(0.2+puff*0.12); if(p.t>1) p.t-=1;
+      p.m.position.set(
+        mouthWorld.x+p.sway*p.t*0.3+Math.sin(t*0.7+p.t*6)*0.05,
+        mouthWorld.y+p.t*1.6,
+        mouthWorld.z+p.sway*p.t*0.14
+      );
+      p.m.scale.setScalar(0.4+p.t*1.8);
+      p.m.material.opacity=Math.max(0,(0.32+puff*0.22)*(1-p.t)*(p.t<0.1?p.t/0.1:1));
+    });
+
+    props.forEach(p=>{
+      const bob=(reduce?0:Math.sin(t*0.9+p.phase)*p.amp);
+      p.g.position.set(p.base.x,p.base.y+bob+(1-e)*0.25,p.base.z);
+      if(!reduce&&p.spin) p.g.rotation.z=p.rot0+Math.sin(t*0.6+p.phase)*0.06;
+      p.g.scale.setScalar(p.s*(0.72+0.28*e));
+    });
+
+    renderer.render(scene,camera);
+    requestAnimationFrame(tick);
+  }
+  tick();
+})();
 </script>
 </body>
 </html>

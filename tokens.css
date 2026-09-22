@@ -1,0 +1,86 @@
+/* Hallmark · genre: playful · macrostructure: Workbench · theme: studied-DNA (source: https://tsukuriba.org/OjiMate/) · enrichment: existing interactive Three.js scene · nav: N2 floating utilities · footer: title metadata */
+/* Hallmark · pre-emit critique: P5 H5 E5 S5 R4 V5 */
+/* Hallmark · contrast: pass (40–41) · slop: pass (42–49) · mobile: pass (34, 49–57) */
+:root {
+  --color-paper: oklch(98% 0.016 88);
+  --color-paper-2: oklch(95% 0.026 86);
+  --color-paper-3: oklch(91% 0.035 82);
+  --color-card: oklch(99% 0.01 88 / 0.96);
+  --color-ink: oklch(29% 0.024 62);
+  --color-ink-2: oklch(52% 0.035 65);
+  --color-ink-on-dark: oklch(97% 0.012 88);
+  --color-rule: oklch(84% 0.025 78);
+  --color-backdrop: oklch(18% 0.022 62 / 0.68);
+  --color-shell: oklch(20% 0.022 62);
+  --color-sun: oklch(86% 0.17 88);
+  --color-sun-soft: oklch(95% 0.065 82);
+  --color-sun-deep: oklch(66% 0.15 65);
+  --color-sun-ink: oklch(32% 0.09 62);
+  --color-sky: oklch(79% 0.13 226);
+  --color-sky-soft: oklch(95% 0.045 226);
+  --color-sky-deep: oklch(64% 0.13 224);
+  --color-sky-ink: oklch(34% 0.085 224);
+  --color-coral: oklch(72% 0.18 34);
+  --color-coral-deep: oklch(59% 0.17 31);
+  --color-coral-ink: oklch(99% 0.006 88);
+  --color-mint: oklch(79% 0.14 161);
+  --color-mint-soft: oklch(94% 0.045 158);
+  --color-mint-ink: oklch(39% 0.09 169);
+  --color-grape: oklch(69% 0.14 300);
+  --color-grape-soft: oklch(93% 0.045 300);
+  --color-danger-soft: oklch(94% 0.045 36);
+  --color-danger-ink: oklch(48% 0.15 32);
+  --color-focus: oklch(40% 0.17 292);
+  --color-title-sky-top: oklch(75% 0.12 229);
+  --color-title-sky-bottom: oklch(84% 0.08 221);
+  --color-title-horizon: oklch(92% 0.075 78);
+  --color-title-grass-top: oklch(76% 0.12 125);
+  --color-title-grass-mid: oklch(68% 0.13 127);
+  --color-title-grass-bottom: oklch(60% 0.12 130);
+
+  --font-display: "Outfit", "Zen Maru Gothic", sans-serif;
+  --font-body: "Zen Maru Gothic", "Hiragino Maru Gothic ProN", sans-serif;
+  --font-label: "Outfit", "Zen Maru Gothic", sans-serif;
+
+  --space-3xs: 0.125rem;
+  --space-2xs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2.5rem;
+  --space-2xl: 4rem;
+  --space-3xl: 6rem;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-md: 1.25rem;
+  --text-lg: 1.5625rem;
+  --text-xl: 1.953rem;
+  --text-2xl: 2.441rem;
+  --text-display: clamp(2.75rem, 5vw + 1rem, 5.25rem);
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-micro: 120ms;
+  --dur-short: 220ms;
+  --dur-long: 420ms;
+
+  --radius-input: 0.75rem;
+  --radius-card: 1.25rem;
+  --radius-shell: 1.75rem;
+  --radius-pill: 999px;
+  --rule-thin: 1px;
+  --shadow-card: 0 4px 0 oklch(29% 0.024 62 / 0.09), 0 12px 28px oklch(29% 0.024 62 / 0.14);
+  --shadow-shell: 0 24px 72px oklch(12% 0.02 62 / 0.48);
+
+  --z-base: 1;
+  --z-raised: 10;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-modal: 400;
+  --z-toast: 500;
+  --z-tooltip: 600;
+}

@@ -3,20 +3,28 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>OjiMate — 画面デモ</title>
-<meta name="description" content="集中するとおじさんも働く、サボるとおじさんもサボる。表裏一体の相棒と暮らす集中アプリ OjiMate の画面デモ。">
+<title>OjiMate — おじさんと集中するタイマー</title>
+<meta name="description" content="集中するとおじさんも働き、積み上げた時間でふたりの家が育つ。表裏一体の相棒と暮らす集中タイマー OjiMate。">
+<meta name="theme-color" content="#26241f">
+<meta name="color-scheme" content="light">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<link rel="icon" href="./icon-192.png" type="image/png" sizes="192x192">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png" sizes="180x180">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=Outfit:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./tokens.css">
 <style>
-  :root{--ink:#3F3A34;--ink-soft:#9B8F80;--sun:#FFC64B;--sky:#6FCBEE;--coral:#FF8A6B;--mint:#4FCFAE;--grape:#B08BF0;
-    --card:rgba(255,255,255,.94);--shadow:0 3px 0 rgba(63,58,52,.09),0 6px 16px rgba(63,58,52,.10)}
+  /* Hallmark · genre: playful · macrostructure: Workbench · designed-as-app */
+  :root{--ink:var(--color-ink);--ink-soft:var(--color-ink-2);--sun:var(--color-sun);--sky:var(--color-sky);--coral:var(--color-coral);--mint:var(--color-mint);--grape:var(--color-grape);
+    --card:var(--color-card);--shadow:var(--shadow-card);--panel-width:clamp(23rem,30vw,28rem)}
   *{box-sizing:border-box}
-  html,body{margin:0;height:100%;overflow:hidden;background:#26241F}
-  body{font-family:"Zen Maru Gothic","Hiragino Maru Gothic ProN",system-ui,sans-serif;font-weight:500;
+  html,body{margin:0;height:100%;overflow:hidden;background:var(--color-shell)}
+  body{font-family:var(--font-body);font-weight:500;
     color:var(--ink);-webkit-font-smoothing:antialiased;display:flex;align-items:center;justify-content:center}
   #phone{position:relative;width:min(100vw,calc(100vh*9/16));height:min(100vh,calc(100vw*16/9));
-    overflow:hidden;background:#A9D3E2;border-radius:26px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+    overflow:hidden;background:var(--color-sky);border-radius:26px;box-shadow:0 20px 60px oklch(from var(--color-shell) l c h / .45)}
   @media (max-aspect-ratio:9/16){#phone{border-radius:0}}
   #stage{position:absolute;inset:0}
   canvas{display:block;touch-action:none}
@@ -30,13 +38,13 @@
     opacity:0;transform:translateY(-10px);pointer-events:none;transition:opacity .22s,transform .22s}
   #ui.screen-home #topRow.open{opacity:1;transform:none;pointer-events:auto}
   #tapHint{position:absolute;left:50%;bottom:96px;transform:translateX(-50%);
-    font-size:11px;font-weight:700;color:#fff;background:rgba(38,36,31,.55);
+    font-size:11px;font-weight:700;color:var(--color-ink-on-dark);background:oklch(from var(--color-ink) l c h / .55);
     padding:5px 12px;border-radius:999px;pointer-events:none;z-index:5;
     opacity:0;transition:opacity .4s;white-space:nowrap}
   #tapHint.show{opacity:1}
   /* 初回だけ出す作業中チュートリアル：ゲージとおじさんの、タップできる場所を教える */
   #focusHint{position:absolute;right:14px;bottom:100px;max-width:172px;text-align:right;
-    font-size:11px;font-weight:700;line-height:1.55;color:#fff;background:rgba(38,36,31,.6);
+    font-size:11px;font-weight:700;line-height:1.55;color:var(--color-ink-on-dark);background:oklch(from var(--color-ink) l c h / .6);
     padding:8px 13px;border-radius:14px;pointer-events:none;z-index:5;
     opacity:0;transition:opacity .4s}
   #focusHint.show{opacity:1}
@@ -51,22 +59,22 @@
   #tutOverlay{position:absolute;inset:0;z-index:55;display:none;pointer-events:none}
   #tutOverlay.show{display:block}
   #tutOverlay .bar{position:absolute;background:rgba(20,18,15,.66);pointer-events:auto;
-    transition:all .32s cubic-bezier(.22,.8,.28,1)}
+    transition:opacity .32s cubic-bezier(.22,.8,.28,1)}
   #tutHole{position:absolute;pointer-events:none;border-radius:20px;z-index:56;
     box-shadow:0 0 0 4px rgba(255,255,255,.95), 0 0 0 10px rgba(255,196,75,.6), 0 10px 32px rgba(0,0,0,.4);
-    transition:all .32s cubic-bezier(.22,.8,.28,1)}
+    transition:opacity .32s cubic-bezier(.22,.8,.28,1),box-shadow .32s cubic-bezier(.22,.8,.28,1)}
   @keyframes tutHolePulse{0%,100%{box-shadow:0 0 0 4px rgba(255,255,255,.95), 0 0 0 10px rgba(255,196,75,.6), 0 10px 32px rgba(0,0,0,.4)}
     50%{box-shadow:0 0 0 4px rgba(255,255,255,.95), 0 0 0 14px rgba(255,196,75,.32), 0 10px 32px rgba(0,0,0,.4)}}
   #tutHole.pulse{animation:tutHolePulse 1.4s ease-in-out infinite}
   #tutCallout{position:absolute;z-index:57;max-width:210px;background:var(--card);border-radius:16px;
     padding:13px 16px;box-shadow:var(--shadow);font-size:13px;line-height:1.62;color:var(--ink);
-    pointer-events:none;transition:all .32s cubic-bezier(.22,.8,.28,1)}
-  #tutCallout b{color:#B24E30}
+    pointer-events:none;transition:opacity .32s cubic-bezier(.22,.8,.28,1),transform .32s cubic-bezier(.22,.8,.28,1)}
+  #tutCallout b{color:var(--color-danger-ink)}
   #tutCallout.center{max-width:240px;text-align:center;padding:22px 20px}
   #tutCallout .tut-emoji{font-size:30px;margin-bottom:8px}
   #tutCallout .btn{width:100%;margin-top:12px;pointer-events:auto}
   #tutSkip{position:absolute;z-index:57;right:12px;top:12px;
-    background:rgba(20,18,15,.55);color:#fff;font-size:11.5px;font-weight:700;
+    background:oklch(from var(--color-shell) l c h / .55);color:var(--color-ink-on-dark);font-size:11.5px;font-weight:700;
     padding:7px 13px;border-radius:999px;border:0;cursor:pointer}
   #tutSkip:active{opacity:.7}
   /* 起動演出のあいだは下のUIを伏せておく */
@@ -75,17 +83,17 @@
   #home{flex:1}
   #stageName{font-size:14px;font-weight:700}
   #chips{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap}
-  .chip{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:999px;background:#FFF0D2;color:#B27A18}
-  .chip.b{background:#DCF3FF;color:#1F7EA1}
-  .chip.c{background:#E2FBF2;color:#1B8A6C}
-  #bar{height:6px;border-radius:999px;background:#F0EBE2;margin-top:7px;overflow:hidden}
-  #barFill{height:100%;width:0;border-radius:999px;background:var(--sun);transition:width .4s}
+  .chip{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--color-sun-soft);color:var(--color-sun-ink)}
+  .chip.b{background:var(--color-sky-soft);color:var(--color-sky-ink)}
+  .chip.c{background:var(--color-mint-soft);color:var(--color-mint-ink)}
+  #bar{height:6px;border-radius:999px;background:var(--color-paper-3);margin-top:7px;overflow:hidden}
+  #barFill{height:100%;width:100%;border-radius:999px;background:var(--sun);transform:scaleX(0);transform-origin:left center;transition:transform .4s}
   #barNote{font-size:9.5px;color:var(--ink-soft);margin-top:4px;font-weight:700}
   #logList{display:flex;gap:4px;overflow-x:auto;margin-top:6px;scrollbar-width:none}
   #logList::-webkit-scrollbar{display:none}
   .rec{flex:none;font-size:9.5px;font-weight:700;padding:3px 7px;border-radius:8px;white-space:nowrap}
-  .rec.ok{background:#E2FBF2;color:#1B8A6C}
-  .rec.ng{background:#FFEFE9;color:#C4633F}
+  .rec.ok{background:var(--color-mint-soft);color:var(--color-mint-ink)}
+  .rec.ng{background:var(--color-danger-soft);color:var(--color-danger-ink)}
   #logEmpty{font-size:9.5px;color:var(--ink-soft)}
 
   /* ===== 画面ルーター ===== */
@@ -117,15 +125,14 @@
   /* もう一度チュートリアルを見るための入口。HOME画面だけ、右上に出す */
   #helpBtn{position:absolute;right:12px;top:12px;z-index:7;pointer-events:auto;
     width:40px;height:40px;border-radius:50%;border:0;background:rgba(38,36,31,.4);box-shadow:var(--shadow);
-    font-size:16px;font-weight:700;color:#fff;cursor:pointer;display:none;align-items:center;justify-content:center}
+    font-size:16px;font-weight:700;color:var(--color-ink-on-dark);cursor:pointer;display:none;align-items:center;justify-content:center}
   #helpBtn:active{transform:translateY(1px)}
 
   /* 正方形のゲージが、タップで長方形に伸びて中に操作を出す */
   #focusGauge{display:none;position:absolute;right:14px;bottom:14px;
     width:112px;height:112px;flex-direction:column;align-items:stretch;
     pointer-events:auto;cursor:pointer;z-index:6;overflow:hidden;
-    background:rgba(38,36,31,.42);border-radius:26px;box-shadow:var(--shadow);
-    transition:width .28s cubic-bezier(.22,.8,.28,1),height .28s cubic-bezier(.22,.8,.28,1),border-radius .28s;}
+    background:rgba(38,36,31,.42);border-radius:26px;box-shadow:var(--shadow);transition:none}
   #ui.screen-focus #focusGauge{display:flex}
   #focusGauge.open{width:236px;height:280px;border-radius:26px;cursor:default}
   #focusGauge .gwrap{position:relative;width:112px;height:112px;flex:none;align-self:center}
@@ -135,7 +142,7 @@
   #gaugeFg{stroke:var(--mint);transition:stroke-dashoffset .25s linear}
   #focusGauge.paused #gaugeFg{stroke:var(--sun)}
   #gaugeTime{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-    font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;color:#fff;
+    font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--color-ink-on-dark);
     text-shadow:0 2px 6px rgba(0,0,0,.4);letter-spacing:.01em;pointer-events:none}
 
   #focusMenu{display:none;flex-direction:column;gap:7px;padding:8px 10px 10px;pointer-events:auto}
@@ -143,7 +150,7 @@
   #focusMenu .btn{width:100%}
 
   /* 「やめる」長押し確定 */
-  #bQuit{position:relative;overflow:hidden}
+  #bQuit{position:relative;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none}
   #bQuit .holdRing{position:absolute;inset:0;border-radius:12px;
     background:conic-gradient(var(--coral) calc(var(--hold,0)*1%), transparent 0);
     opacity:.55;pointer-events:none}
@@ -159,60 +166,60 @@
   #pickTotal{font-size:11px;color:var(--ink-soft);font-weight:700;margin-top:2px}
   #pickSliderWrap{padding:6px 4px 2px}
   #pickSlider{width:100%;-webkit-appearance:none;appearance:none;height:8px;border-radius:999px;
-    background:#F0EBE2;outline:none;margin:10px 0 4px;position:relative}
+    background:var(--color-paper-3);outline:none;margin:10px 0 4px;position:relative}
   #pickSlider::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;
-    background:#fff;border:3px solid var(--coral);box-shadow:0 2px 6px rgba(63,58,52,.3);cursor:pointer}
-  #pickSlider::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;
+    background:var(--color-paper);border:3px solid var(--coral);box-shadow:0 2px 6px rgba(63,58,52,.3);cursor:pointer}
+  #pickSlider::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:var(--color-paper);
     border:3px solid var(--coral);box-shadow:0 2px 6px rgba(63,58,52,.3);cursor:pointer}
   #pickTicks{display:flex;justify-content:space-between;font-size:10.5px;color:var(--ink-soft);font-weight:700;padding:0 2px}
   #pickSug{position:relative;height:4px;margin:0 11px}
   #pickSugDot{position:absolute;top:-3px;width:10px;height:10px;border-radius:50%;background:var(--sky);
-    border:2px solid #fff;box-shadow:0 1px 3px rgba(63,58,52,.3);transform:translateX(-50%)}
+    border:2px solid var(--color-paper);box-shadow:0 1px 3px rgba(63,58,52,.3);transform:translateX(-50%)}
   #pickTagLabel{font-size:11px;font-weight:700;color:var(--ink-soft);margin:12px 0 6px}
   #pickTags{display:flex;gap:8px;flex-wrap:wrap}
   #pickTags button{border:0;border-radius:999px;min-height:48px;padding:13px 22px;font-family:inherit;font-weight:700;
-    font-size:15px;background:#F3EFE8;color:var(--ink-soft);cursor:pointer;transition:.16s}
-  #pickTags button[aria-pressed="true"]{background:var(--coral);color:#fff}
+    font-size:15px;background:var(--color-paper-2);color:var(--ink-soft);cursor:pointer;transition:transform .16s,background-color .16s}
+  #pickTags button[aria-pressed="true"]{background:var(--coral);color:var(--color-ink)}
 
   #stageName{cursor:pointer;-webkit-user-select:none;user-select:none}
-  .seg{display:flex;background:#F3EFE8;border-radius:11px;padding:2px;gap:2px;flex:1}
+  .seg{display:flex;background:var(--color-paper-2);border-radius:11px;padding:2px;gap:2px;flex:1}
   .seg button{flex:1;border:0;background:transparent;border-radius:9px;min-height:40px;padding:9px 0;font-family:inherit;
-    font-weight:700;font-size:13px;color:var(--ink-soft);cursor:pointer;transition:.16s}
-  .seg button[aria-pressed="true"]{background:var(--sun);color:#6B4A00;box-shadow:0 2px 0 rgba(180,130,10,.28)}
+    font-weight:700;font-size:13px;color:var(--ink-soft);cursor:pointer;transition:transform .16s,background-color .16s}
+  .seg button[aria-pressed="true"]{background:var(--sun);color:var(--color-sun-ink);box-shadow:0 2px 0 rgba(180,130,10,.28)}
   #say{position:relative;padding:16px 20px;min-height:64px;display:flex;align-items:center}
-  #sayName{display:inline-block;font-size:12px;font-weight:700;color:#B24E30;background:#FFE7DE;
+  #sayName{display:inline-block;font-size:12px;font-weight:700;color:var(--color-danger-ink);background:var(--color-danger-soft);
     padding:4px 10px;border-radius:999px;margin-bottom:5px}
   #sayText{font-size:16px;line-height:1.55}
   #say.quiet #sayText{color:var(--ink-soft);font-size:15px}
   #sayPick.quiet #sayTextPick{color:var(--ink-soft)}
   #ctrl{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:9px}
   .btn{border:0;border-radius:16px;min-height:52px;padding:14px 8px;font-family:inherit;font-weight:700;font-size:15px;
-    background:#fff;color:var(--ink);cursor:pointer;box-shadow:0 3px 0 rgba(63,58,52,.14);transition:transform .1s,box-shadow .1s}
+    background:var(--color-paper);color:var(--ink);cursor:pointer;box-shadow:0 3px 0 rgba(63,58,52,.14);transition:transform .1s,box-shadow .1s}
   .btn:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(63,58,52,.14)}
-  .btn.primary{grid-column:span 3;background:var(--coral);color:#fff;box-shadow:0 4px 0 #D9603F;font-size:20px;min-height:68px;padding:18px 8px}
-  .btn.primary:active{box-shadow:0 1px 0 #D9603F}
-  .btn.sky{background:var(--sky);color:#0C4E66;box-shadow:0 3px 0 #3EA6C9}
-  .btn.sky:active{box-shadow:0 1px 0 #3EA6C9}
-  .btn.plain{background:#F3EFE8;color:var(--ink-soft);box-shadow:0 3px 0 rgba(63,58,52,.10)}
+  .btn.primary{grid-column:span 3;background:var(--coral);color:var(--color-ink);box-shadow:0 4px 0 var(--color-coral-deep);font-size:20px;min-height:68px;padding:18px 8px}
+  .btn.primary:active{box-shadow:0 1px 0 var(--color-coral-deep)}
+  .btn.sky{background:var(--sky);color:var(--color-sky-ink);box-shadow:0 3px 0 var(--color-sky-deep)}
+  .btn.sky:active{box-shadow:0 1px 0 var(--color-sky-deep)}
+  .btn.plain{background:var(--color-paper-2);color:var(--ink-soft);box-shadow:0 3px 0 rgba(63,58,52,.10)}
   .btn:disabled{opacity:.34;cursor:default;transform:none}
   .btn:focus-visible{outline:3px solid var(--grape);outline-offset:2px}
   #dayQ{padding:9px 13px;display:flex;flex-direction:column;gap:8px;margin-top:0}
   #dqText{font-size:12.5px;font-weight:700}
   #dqBtns{display:grid;grid-template-columns:1fr 1fr;gap:6px}
   #coin{position:absolute;left:50%;top:44%;transform:translateX(-50%);font-size:21px;font-weight:700;
-    color:#B27A18;text-shadow:0 2px 0 #fff;opacity:0;pointer-events:none}
+    color:var(--color-sun-ink);text-shadow:0 2px 0 var(--color-paper);opacity:0;pointer-events:none}
   #coin.go{animation:rise 1.5s ease-out}
   @keyframes rise{0%{opacity:0;transform:translate(-50%,10px)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-50px)}}
 
   /* ===== タイトル画面（起動時のオーバーレイ、STARTでホームへ） ===== */
   #ttFrame{position:absolute;inset:0;z-index:40;overflow:hidden;
-    background:linear-gradient(180deg,#6FB9E4 0%,#A6DCEF 28%,#FFE3B8 42%);
+    background:linear-gradient(180deg,var(--color-title-sky-top) 0%,var(--color-title-sky-bottom) 28%,var(--color-title-horizon) 42%);
     transition:opacity .5s ease}
   #ttFrame.tt-hide{opacity:0;pointer-events:none}
   #ttRays{position:absolute;left:50%;top:28%;width:250%;aspect-ratio:1;transform:translate(-50%,-50%);
     background:repeating-conic-gradient(from 0deg,rgba(255,255,255,.26) 0deg 5deg,rgba(255,255,255,0) 5deg 14deg);
-    -webkit-mask-image:radial-gradient(circle,rgba(0,0,0,.24) 0%,#000 24%,rgba(0,0,0,.46) 46%,transparent 74%);
-    mask-image:radial-gradient(circle,rgba(0,0,0,.24) 0%,#000 24%,rgba(0,0,0,.46) 46%,transparent 74%);
+    -webkit-mask-image:radial-gradient(circle,rgba(0,0,0,.24) 0%,var(--color-ink) 24%,rgba(0,0,0,.46) 46%,transparent 74%);
+    mask-image:radial-gradient(circle,rgba(0,0,0,.24) 0%,var(--color-ink) 24%,rgba(0,0,0,.46) 46%,transparent 74%);
     animation:ttSpin 90s linear infinite;pointer-events:none}
   @keyframes ttSpin{to{transform:translate(-50%,-50%) rotate(360deg)}}
   .tt-cloud{position:absolute;background:rgba(255,255,255,.9);border-radius:999px;pointer-events:none}
@@ -225,7 +232,7 @@
   #ttC2::after{width:30%;height:112%;left:8%;top:-46%}
   @keyframes ttDrift{from{transform:translateX(-14%)}to{transform:translateX(14%)}}
   #ttLand{position:absolute;left:-16%;right:-16%;top:38%;bottom:-6%;
-    background:radial-gradient(120% 78% at 50% 0%,#9BC271 0%,#82AD5C 52%,#6B944A 100%);
+    background:radial-gradient(120% 78% at 50% 0%,var(--color-title-grass-top) 0%,var(--color-title-grass-mid) 52%,var(--color-title-grass-bottom) 100%);
     border-radius:50% 50% 0 0 / 22% 22% 0 0;pointer-events:none}
   #ttLandShade{position:absolute;left:-16%;right:-16%;top:38%;bottom:-6%;
     background:radial-gradient(60% 26% at 22% 32%,rgba(255,255,255,.16),transparent 70%),
@@ -234,30 +241,292 @@
     border-radius:50% 50% 0 0 / 22% 22% 0 0;pointer-events:none}
   #ttLandEdge{position:absolute;left:-16%;right:-16%;top:38%;height:14%;
     border-radius:50% 50% 0 0 / 62% 62% 0 0;box-shadow:inset 0 7px 0 rgba(255,255,255,.26);pointer-events:none}
-  .tt-tuft{position:absolute;pointer-events:none;border-radius:60% 60% 40% 40%/90% 90% 12% 12%;background:#6B944A}
+  .tt-tuft{position:absolute;pointer-events:none;border-radius:60% 60% 40% 40%/90% 90% 12% 12%;background:var(--color-title-grass-bottom)}
   #ttStage{position:absolute;inset:0}
   #ttStage canvas{display:block}
   #ttLogo{position:absolute;left:0;right:0;top:6%;display:flex;flex-direction:column;align-items:center;gap:2px;
-    pointer-events:none;z-index:3;animation:ttLogoIn .85s cubic-bezier(.2,1.5,.5,1) both}
+    pointer-events:none;z-index:3;animation:ttLogoIn .85s var(--ease-out) both}
   @keyframes ttLogoIn{from{transform:translateY(-10px) scale(.9)}to{transform:none}}
   #ttLogoMain{width:min(102%,470px);height:auto;display:block;
     filter:drop-shadow(0 9px 0 rgba(90,62,0,.24)) drop-shadow(0 14px 26px rgba(31,53,66,.36))}
   #ttLogoSub{width:min(94%,400px);height:auto;display:block;margin-top:-2px;
     filter:drop-shadow(0 3px 0 rgba(90,62,0,.28)) drop-shadow(0 6px 14px rgba(31,53,66,.3))}
   #ttStart{position:absolute;left:50%;bottom:5%;transform:translateX(-50%);
-    font-family:"Outfit","Zen Maru Gothic",system-ui,sans-serif;font-weight:700;
-    font-size:clamp(22px,6.6vw,31px);letter-spacing:.16em;color:#fff;background:#FF8A6B;
+    font-family:var(--font-display);font-weight:700;
+    font-size:clamp(22px,6.6vw,31px);letter-spacing:.16em;color:var(--color-ink);background:var(--color-coral);
     border:0;border-radius:999px;padding:18px 62px 18px 70px;cursor:pointer;
-    box-shadow:0 6px 0 #D9603F,0 14px 30px rgba(31,53,66,.36);z-index:3;animation:ttBreathe 2.6s ease-in-out infinite}
-  #ttStart:active{transform:translateX(-50%) translateY(4px);box-shadow:0 2px 0 #D9603F,0 8px 18px rgba(31,53,66,.3)}
-  #ttStart:focus-visible{outline:3px solid #fff;outline-offset:4px}
+    box-shadow:0 6px 0 var(--color-coral-deep),0 14px 30px rgba(31,53,66,.36);z-index:3;animation:ttBreathe 2.6s ease-in-out infinite}
+  #ttStart:active{transform:translateX(-50%) translateY(4px);box-shadow:0 2px 0 var(--color-coral-deep),0 8px 18px rgba(31,53,66,.3)}
+  #ttStart:focus-visible{outline:3px solid var(--color-focus);outline-offset:4px}
   @keyframes ttBreathe{0%,100%{transform:translateX(-50%)}50%{transform:translateX(-50%) translateY(-4px)}}
   @media (prefers-reduced-motion:reduce){#ttRays,#ttC1,#ttC2,#ttLogo,#ttStart{animation:none}}
+
+  /* ===== Web app refinement: mobile-first, desktop Workbench ===== */
+  html,body{width:100%;min-height:100%;overflow-x:clip;overflow-y:hidden;background:var(--color-shell)}
+  body{font-family:var(--font-body);color:var(--color-ink);padding:0}
+  h1,h2{min-width:0;overflow-wrap:anywhere}
+  button,input{font:inherit}
+  button{white-space:nowrap}
+  #phone{width:100%;height:100dvh;max-width:none;max-height:none;background:var(--color-sky);border-radius:0;box-shadow:none}
+  #appMain{position:absolute;inset:0;overflow:hidden}
+  #stage{inset:0;min-width:0}
+  #stage canvas{width:100%;height:100%;outline:none}
+  .renderNotice{position:absolute;left:50%;top:50%;width:min(22rem,calc(100% - 2rem));transform:translate(-50%,-50%);margin:0;
+    padding:var(--space-md);border-radius:var(--radius-card);background:var(--color-card);color:var(--color-ink);font-size:var(--text-sm);line-height:1.6;text-align:center;box-shadow:var(--shadow-card)}
+  #phone.is-2d #stage{background-color:var(--color-sky);background-image:radial-gradient(circle at 50% 35%,oklch(from var(--color-paper) l c h / .8),transparent 32%),url('./icon.svg');
+    background-repeat:no-repeat;background-position:center,50% 34%;background-size:100% 100%,clamp(8rem,28vw,14rem)}
+  #phone.is-2d .renderNotice{top:68%}
+  #phone.is-2d #tapHint,#phone.is-2d #focusHint{display:none}
+  .srOnly{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;
+    overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+  .card{background:var(--color-card);border-radius:var(--radius-card);padding:var(--space-sm) var(--space-md);box-shadow:var(--shadow-card)}
+  #ui{padding:max(var(--space-sm),env(safe-area-inset-top)) max(var(--space-sm),env(safe-area-inset-right))
+    max(var(--space-sm),env(safe-area-inset-bottom)) max(var(--space-sm),env(safe-area-inset-left));gap:var(--space-xs)}
+
+  #appToolbar{position:absolute;inset-inline:var(--space-sm);top:max(var(--space-sm),env(safe-area-inset-top));z-index:var(--z-raised);
+    display:flex;align-items:center;justify-content:space-between;pointer-events:none}
+  #toolbarActions{display:flex;gap:var(--space-xs);margin-inline-start:auto;pointer-events:auto}
+  .utilityBtn{display:inline-flex;align-items:center;justify-content:center;gap:var(--space-2xs);min-width:3rem;min-height:2.75rem;
+    padding:var(--space-xs) var(--space-sm);border:var(--rule-thin) solid oklch(from var(--color-ink) l c h / .12);
+    border-radius:var(--radius-pill);background:var(--color-card);color:var(--color-ink);font-size:var(--text-sm);font-weight:700;
+    box-shadow:0 3px 0 oklch(from var(--color-ink) l c h / .12);cursor:pointer;pointer-events:auto;
+    transition:transform var(--dur-micro) var(--ease-out),background-color var(--dur-short) var(--ease-out)}
+  #backBtn{position:static;width:auto;height:auto;display:none}
+  #helpBtn{position:static;width:auto;height:auto;display:none}
+  .utilityBtn:active{transform:translateY(2px);box-shadow:0 1px 0 oklch(from var(--color-ink) l c h / .12)}
+  .utilityBtn:disabled,#pickAdvice:disabled,#pickTags button:disabled,#gaugeToggle:disabled,#tutSkip:disabled,#ttStart:disabled{
+    opacity:.5;cursor:not-allowed;pointer-events:none;transform:none}
+  :where(button,input,[tabindex]):focus-visible{outline:3px solid var(--color-focus);outline-offset:3px}
+
+  #topRow{inset-inline:var(--space-sm);top:calc(max(var(--space-sm),env(safe-area-inset-top)) + 3.5rem);gap:var(--space-xs);z-index:var(--z-raised);
+    transition:opacity var(--dur-short) var(--ease-out),transform var(--dur-short) var(--ease-out)}
+  #stageName{font-size:var(--text-base)}
+  #chips{gap:var(--space-2xs);margin-top:var(--space-xs)}
+  .chip{font-size:var(--text-xs);padding:var(--space-2xs) var(--space-xs);background:var(--color-paper-2);color:var(--color-sun-ink)}
+  .chip.b{background:oklch(from var(--color-sky) 94% calc(c * .35) h);color:var(--color-sky-ink)}
+  .chip.c{background:var(--color-mint-soft);color:var(--color-mint-ink)}
+  #bar{height:.5rem;background:var(--color-paper-3);margin-top:var(--space-xs)}
+  #barFill{width:100%;transition:transform var(--dur-long) var(--ease-out);transform:scaleX(0);transform-origin:left center}
+  #barNote,#logEmpty,.rec{font-size:var(--text-xs)}
+  #barNote{color:var(--color-ink-2);margin-top:var(--space-2xs)}
+  #logList{gap:var(--space-2xs);margin-top:var(--space-xs)}
+  .rec{padding:var(--space-2xs) var(--space-xs);border-radius:var(--radius-input)}
+  .rec.ok{background:var(--color-mint-soft);color:var(--color-mint-ink)}
+  .rec.ng{background:var(--color-danger-soft);color:var(--color-danger-ink)}
+
+  #tapHint,#focusHint{font-size:var(--text-xs);color:var(--color-ink-on-dark);background:var(--color-backdrop);
+    transition:opacity var(--dur-long) var(--ease-out)}
+  #focusHint{max-width:14rem;border-radius:var(--radius-input)}
+
+  #tutOverlay{z-index:var(--z-modal)}
+  #tutOverlay .bar{background:var(--color-backdrop);transition:none}
+  #tutHole{z-index:calc(var(--z-modal) + 1);border-radius:var(--radius-card);
+    box-shadow:0 0 0 4px var(--color-paper),0 0 0 10px oklch(from var(--color-sun) l c h / .55);transition:opacity var(--dur-short) var(--ease-out)}
+  #tutHole.pulse{animation:none}
+  #tutCallout{z-index:calc(var(--z-modal) + 2);max-width:min(18rem,calc(100% - 1.5rem));background:var(--color-card);
+    border-radius:var(--radius-card);padding:var(--space-md);font-size:var(--text-sm);line-height:1.65;color:var(--color-ink);transition:opacity var(--dur-short) var(--ease-out)}
+  #tutCallout b{color:var(--color-danger-ink)}
+  #tutCallout.center{max-width:min(21rem,calc(100% - 1.5rem));padding:var(--space-lg)}
+  #tutCallout h2{margin:0 0 var(--space-xs);font-family:var(--font-display);font-size:var(--text-lg);line-height:1.2}
+  #tutCallout p{margin:0;color:var(--color-ink-2)}
+  #tutCallout .tutActions{display:grid;gap:var(--space-xs);margin-top:var(--space-md)}
+  #tutCallout .btn{margin-top:0;pointer-events:auto}
+  #tutSkip{z-index:calc(var(--z-modal) + 2);right:max(var(--space-sm),env(safe-area-inset-right));top:max(var(--space-sm),env(safe-area-inset-top));
+    min-height:2.75rem;padding:var(--space-xs) var(--space-sm);background:var(--color-ink);color:var(--color-ink-on-dark);font-size:var(--text-sm);border-radius:var(--radius-pill);pointer-events:auto}
+
+  #ui.intro .on-home{transition:opacity var(--dur-long) var(--ease-out)}
+  #ui:not(.intro) .on-home{transition:opacity var(--dur-long) var(--ease-out)}
+  #say{padding:var(--space-md);min-height:4rem}
+  #sayName,#sayNamePick{font-size:var(--text-xs);color:var(--color-danger-ink);background:var(--color-danger-soft);
+    padding:var(--space-2xs) var(--space-xs);border-radius:var(--radius-pill);margin-bottom:var(--space-2xs)}
+  #sayText,#sayTextPick{font-size:var(--text-base);line-height:1.55}
+  #say.quiet #sayText{font-size:var(--text-sm);color:var(--color-ink-2)}
+  #sayPick.quiet #sayTextPick{color:var(--color-ink-2)}
+  #ctrl,#pickCtrl{margin-bottom:var(--space-xs)}
+  #ctrl .btn,#pickCtrl .btn{width:100%;flex:1}
+
+  .btn{--btn-face:var(--color-paper-2);--btn-ink:var(--color-ink);--btn-edge:var(--color-rule);--btn-cast:oklch(from var(--color-ink) l c h / .16);
+    display:inline-flex;align-items:center;justify-content:center;gap:.5em;border:0;border-radius:var(--radius-input);min-height:3.25rem;
+    padding:var(--space-sm) var(--space-md);font-family:var(--font-body);font-weight:700;font-size:var(--text-base);background:var(--btn-face);color:var(--btn-ink);
+    cursor:pointer;box-shadow:0 4px 0 var(--btn-edge),0 7px 14px -6px var(--btn-cast);transform:translateY(0);
+    transition:transform var(--dur-micro) var(--ease-out),box-shadow var(--dur-micro) var(--ease-out),background-color var(--dur-short) var(--ease-out)}
+  .btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--btn-edge),0 2px 6px -3px var(--btn-cast);transition-duration:70ms}
+  .btn.primary{--btn-face:var(--color-coral);--btn-ink:var(--color-ink);--btn-edge:var(--color-coral-deep);--btn-cast:oklch(from var(--color-coral) l c h / .35);
+    color:var(--btn-ink);font-size:var(--text-md);min-height:4rem;padding:var(--space-md)}
+  .btn.sky{--btn-face:var(--color-sky);--btn-ink:var(--color-sky-ink);--btn-edge:var(--color-sky-deep);color:var(--btn-ink)}
+  .btn.plain{--btn-face:var(--color-paper-2);--btn-ink:var(--color-ink);--btn-edge:var(--color-rule);color:var(--btn-ink)}
+  .btn:disabled,.btn[aria-disabled="true"]{opacity:.5;cursor:not-allowed;pointer-events:none;transform:none;box-shadow:0 4px 0 var(--btn-edge)}
+  .btn[aria-busy="true"]{cursor:progress;opacity:.72}
+  .btn.is-error{--btn-face:var(--color-danger-soft);--btn-ink:var(--color-danger-ink)}
+  .btn.is-success{--btn-face:var(--color-mint-soft);--btn-ink:var(--color-mint-ink)}
+  #dayQ{padding:var(--space-sm) var(--space-md);gap:var(--space-xs)}
+  #dqText{font-size:var(--text-sm)}
+  #dqBtns{gap:var(--space-xs)}
+
+  #pickTop{gap:var(--space-xs)}
+  #pickCard{padding:var(--space-md)}
+  #pickTime{font-family:var(--font-display);font-size:clamp(2.5rem,12vw,3.5rem);line-height:1;font-variant-numeric:tabular-nums}
+  #pickTotal{font-size:var(--text-xs);color:var(--color-ink-2);margin-top:var(--space-2xs)}
+  #pickSliderWrap{padding:var(--space-sm) var(--space-2xs) var(--space-2xs)}
+  #pickSliderLabel{display:block;text-align:start;font-size:var(--text-sm);font-weight:700;color:var(--color-ink)}
+  #pickSlider{height:.55rem;background:var(--color-paper-3);outline:3px solid transparent;outline-offset:3px;margin:var(--space-md) 0 var(--space-xs)}
+  #pickSlider:focus-visible{outline-color:var(--color-focus)}
+  #pickSlider:disabled{opacity:.55;cursor:not-allowed}
+  #pickSlider::-webkit-slider-thumb{width:2rem;height:2rem;background:var(--color-paper);border:3px solid var(--color-coral);box-shadow:0 2px 6px oklch(from var(--color-ink) l c h / .28)}
+  #pickSlider::-moz-range-thumb{width:1.75rem;height:1.75rem;background:var(--color-paper);border:3px solid var(--color-coral);box-shadow:0 2px 6px oklch(from var(--color-ink) l c h / .28)}
+  #pickTicks{font-size:var(--text-xs);color:var(--color-ink-2)}
+  #pickSugDot{background:var(--color-sky);border-color:var(--color-paper);box-shadow:0 1px 3px oklch(from var(--color-ink) l c h / .3)}
+  #pickAdvice{display:inline-flex;align-items:center;justify-content:center;min-height:2.75rem;margin-top:var(--space-xs);padding:var(--space-xs) var(--space-sm);
+    border:var(--rule-thin) solid var(--color-sky-deep);border-radius:var(--radius-pill);background:oklch(from var(--color-sky) 95% calc(c * .25) h);
+    color:var(--color-sky-ink);font-size:var(--text-sm);font-weight:700;cursor:pointer}
+  #pickAdvice:active,#pickTags button:active{transform:translateY(2px)}
+  #pickTagLabel{font-size:var(--text-sm);color:var(--color-ink-2);margin:var(--space-md) 0 var(--space-xs)}
+  #pickTags{gap:var(--space-xs)}
+  #pickTags button{min-height:2.75rem;padding:var(--space-xs) var(--space-md);font-family:var(--font-body);font-size:var(--text-sm);
+    background:var(--color-paper-2);color:var(--color-ink);transition:transform var(--dur-micro) var(--ease-out),background-color var(--dur-short) var(--ease-out)}
+  #pickTags button[aria-pressed="true"]{background:var(--color-coral);color:var(--color-ink);box-shadow:inset 0 0 0 2px var(--color-coral-deep)}
+
+  #focusGauge{right:max(var(--space-sm),env(safe-area-inset-right));bottom:max(var(--space-sm),env(safe-area-inset-bottom));
+    width:7rem;height:7rem;overflow:visible;background:transparent;border-radius:var(--radius-card);box-shadow:none;transition:none;cursor:default}
+  #focusGauge.open{width:7rem;height:7rem;border-radius:var(--radius-card)}
+  #focusGauge .gwrap{position:relative;width:7rem;height:7rem;padding:0;border:0;border-radius:var(--radius-card);background:var(--color-backdrop);
+    box-shadow:var(--shadow-card);cursor:pointer;color:var(--color-ink-on-dark)}
+  #gaugeToggle:active{transform:translateY(1px)}
+  #gaugeToggle:focus-visible,#tutSkip:focus-visible{outline-color:var(--color-paper)}
+  #gaugeSvg{width:7rem;height:7rem}
+  #gaugeBg{stroke:oklch(from var(--color-paper) l c h / .34)}
+  #gaugeFg{transition:stroke-dashoffset .25s linear}
+  #focusGauge.paused #gaugeFg,#focusGauge.nudging #gaugeFg{stroke:var(--color-sun)}
+  #gaugeTime{top:45%;font-family:var(--font-display);font-size:var(--text-md);color:var(--color-ink-on-dark);text-shadow:none}
+  #focusState{position:absolute;inset-inline:0;bottom:1.35rem;text-align:center;font-size:.6875rem;font-weight:700;color:var(--color-ink-on-dark);pointer-events:none}
+  #focusMenu{position:absolute;right:0;bottom:calc(100% + var(--space-sm));display:flex;flex-direction:column;gap:var(--space-xs);
+    width:min(15rem,calc(100vw - 2rem));padding:var(--space-sm);background:var(--color-card);border-radius:var(--radius-card);box-shadow:var(--shadow-card);
+    opacity:1;transform:none;visibility:visible;pointer-events:auto;transition:opacity var(--dur-short) var(--ease-out),transform var(--dur-short) var(--ease-out)}
+  #focusMenu[hidden]{display:flex!important;opacity:0;transform:translateY(var(--space-xs));visibility:hidden;pointer-events:none}
+  #focusMenu .btn{width:100%}
+  #ui.screen-focus #say{right:8rem}
+
+  #coin{color:var(--color-sun-ink);text-shadow:0 2px 0 var(--color-paper);font-size:var(--text-md)}
+  #coin.go{animation:rise 1.2s var(--ease-out)}
+
+  #ttFrame{z-index:var(--z-modal);transition:opacity var(--dur-long) var(--ease-in)}
+  #ttLogo{animation:ttLogoIn var(--dur-long) var(--ease-out) both}
+  #ttLead{position:absolute;z-index:3;left:50%;top:34%;width:min(88%,30rem);transform:translateX(-50%);margin:0;
+    color:var(--color-ink);font-size:clamp(.875rem,3.5vw,1.15rem);font-weight:700;line-height:1.55;text-align:center;
+    text-shadow:0 1px 0 oklch(from var(--color-paper) l c h / .55)}
+  #ttStart{bottom:calc(max(var(--space-3xl),env(safe-area-inset-bottom) + 4.75rem));min-height:3.5rem;
+    padding:var(--space-md) var(--space-xl);font-family:var(--font-display);font-size:clamp(1rem,4.6vw,1.35rem);letter-spacing:.02em;
+    color:var(--color-ink);background:var(--color-coral);border-radius:var(--radius-pill);
+    box-shadow:0 5px 0 var(--color-coral-deep),0 14px 28px oklch(from var(--color-ink) l c h / .26);animation:none;
+    transition:transform var(--dur-micro) var(--ease-out),box-shadow var(--dur-micro) var(--ease-out)}
+  #ttStart:active{transform:translateX(-50%) translateY(3px);box-shadow:0 2px 0 var(--color-coral-deep),0 8px 18px oklch(from var(--color-ink) l c h / .24)}
+  #ttStart:focus-visible{outline-color:var(--color-focus)}
+  #ttMeta{position:absolute;z-index:3;inset-inline:var(--space-md);bottom:max(var(--space-md),env(safe-area-inset-bottom));margin:0;
+    color:var(--color-ink);font-size:.6875rem;font-weight:700;text-align:center;text-shadow:0 1px 0 oklch(from var(--color-paper) l c h / .65)}
+
+  @media (hover:hover) and (pointer:fine){
+    .utilityBtn:hover,#pickAdvice:hover,#pickTags button:hover{transform:translateY(-1px);background-color:var(--color-paper)}
+    .btn:hover{transform:translateY(-2px);box-shadow:0 6px 0 var(--btn-edge),0 12px 22px -7px var(--btn-cast)}
+    #ttStart:hover{transform:translateX(-50%) translateY(-2px);box-shadow:0 7px 0 var(--color-coral-deep),0 18px 32px oklch(from var(--color-ink) l c h / .28)}
+  }
+
+  @media (min-width:48rem){
+    body{padding:var(--space-md)}
+    #phone{width:min(100%,96rem);height:min(calc(100dvh - 2rem),56rem);border-radius:var(--radius-shell);box-shadow:var(--shadow-shell)}
+    #stage{right:var(--panel-width)}
+    #ui{left:auto;right:0;width:var(--panel-width);padding:var(--space-lg);gap:var(--space-sm);overflow-y:auto;overflow-x:hidden;
+      background:var(--color-paper);border-inline-start:var(--rule-thin) solid var(--color-rule)}
+    #appToolbar{inset-inline:var(--space-lg);top:var(--space-lg)}
+    #topRow{inset-inline:var(--space-lg);top:5.5rem;opacity:1;transform:none;pointer-events:auto}
+    #ui:not(.screen-home) #topRow{opacity:0;visibility:hidden;pointer-events:none}
+    #infoBtn{display:none!important}
+    #tapHint{display:none}
+    #focusHint{right:calc(var(--panel-width) + var(--space-lg));bottom:var(--space-lg);text-align:left}
+    #coin{left:calc((100% - var(--panel-width))/2)}
+    #ctrl,#pickCtrl{margin-bottom:var(--space-sm)}
+    #say,#sayPick,#dayQ,#pickTop,#ctrl,#pickCtrl{width:100%}
+    #pickCard{padding:var(--space-lg)}
+    #pickTime{font-size:3.5rem}
+    #focusGauge{right:var(--space-lg);bottom:var(--space-lg)}
+    #ui.screen-focus #say{left:var(--space-lg);right:8.5rem;bottom:var(--space-lg)}
+    #ttLogo{top:4%;align-items:flex-start;left:clamp(2rem,6vw,6rem);right:auto;width:min(44rem,55%)}
+    #ttLogoMain{width:min(100%,38rem)}
+    #ttLogoSub{width:min(92%,32rem)}
+    #ttLead{left:clamp(2rem,6vw,6rem);top:40%;width:min(30rem,42%);transform:none;text-align:left;font-size:clamp(1rem,1.5vw,1.35rem)}
+    #ttStart{left:auto;right:clamp(2rem,6vw,6rem);bottom:clamp(3.5rem,8vh,6rem);transform:none;font-size:1.25rem}
+    #ttStart:active{transform:translateY(3px)}
+    #ttMeta{left:auto;right:clamp(2rem,6vw,6rem);bottom:var(--space-lg);width:auto;text-align:right;font-size:var(--text-xs)}
+    .mobileBreak{display:none}
+    @media (hover:hover) and (pointer:fine){#ttStart:hover{transform:translateY(-2px)}}
+  }
+
+  @media (max-width:59.99rem) and (orientation:landscape) and (max-height:42rem){
+    #phone{width:100%;height:100dvh;border-radius:0}
+    #stage{right:50%}
+    #ui{left:50%;width:50%;padding:var(--space-sm);overflow-y:auto;background:var(--color-paper);
+      border-inline-start:var(--rule-thin) solid var(--color-rule)}
+    #appToolbar{position:sticky;left:auto;right:auto;top:0;min-height:2.75rem;flex:none;margin-bottom:var(--space-xs)}
+    #infoBtn{display:inline-flex!important}
+    #topRow{display:none;position:relative;inset:auto;margin-bottom:var(--space-xs)}
+    #ui.screen-home #topRow.open{display:flex}
+    .spacer{display:none!important}
+    #ctrl,#pickCtrl{margin-top:var(--space-xs)}
+    #say,#sayPick{margin-top:var(--space-xs)}
+    #focusGauge{right:var(--space-sm);bottom:var(--space-sm)}
+    #focusHint{right:calc(50% + var(--space-sm));bottom:var(--space-sm)}
+    #tapHint{left:25%;bottom:var(--space-sm)}
+    #coin{left:25%}
+    #ttLogo{top:2%;left:var(--space-lg);right:auto;width:42%;align-items:flex-start}
+    #ttLogoMain{width:100%}
+    #ttLogoSub{width:94%}
+    #ttLead{left:var(--space-lg);top:52%;width:38%;transform:none;text-align:left;font-size:.8rem;line-height:1.4}
+    #ttStart{left:auto;right:var(--space-lg);bottom:3.5rem;width:34%;transform:none;font-size:1rem;padding:var(--space-sm) var(--space-md)}
+    #ttStart:active{transform:translateY(3px)}
+    #ttMeta{left:auto;right:var(--space-lg);bottom:var(--space-xs);width:44%;text-align:right;font-size:.6rem}
+    @media (hover:hover) and (pointer:fine){#ttStart:hover{transform:translateY(-2px)}}
+  }
+
+  @media (min-width:60rem) and (orientation:landscape) and (max-height:42rem){
+    #phone{height:calc(100dvh - 2rem)}
+    #ui{overflow-y:auto}
+    #appToolbar{position:sticky;left:auto;right:auto;top:0;min-height:2.75rem;flex:none;margin-bottom:var(--space-xs)}
+    #infoBtn{display:inline-flex!important}
+    #topRow{display:none;position:relative;inset:auto;margin-bottom:var(--space-xs)}
+    #ui.screen-home #topRow.open{display:flex}
+    .spacer{display:none!important}
+    #ctrl,#pickCtrl,#say,#sayPick{margin-top:var(--space-xs)}
+    #ttLogo{top:2%;left:var(--space-xl);width:min(38%,28rem)}
+    #ttLogoSub{width:min(92%,24rem)}
+    #ttLead{left:var(--space-xl);top:54%;width:36%;font-size:.9rem;line-height:1.4}
+    #ttStart{right:var(--space-xl);bottom:3.75rem;width:min(22rem,34%);font-size:1rem;padding:var(--space-sm) var(--space-md)}
+    #ttMeta{right:var(--space-xl);bottom:var(--space-xs);width:40%;font-size:.65rem}
+  }
+
+  @media (max-width:22rem){
+    #toolbarActions{gap:var(--space-2xs)}
+    .utilityBtn{min-width:2.75rem;padding-inline:var(--space-xs);font-size:var(--text-xs)}
+    #backBtn span{display:none}
+    #pickTags button{flex:1 1 calc(50% - var(--space-xs))}
+    #ttStart{padding-inline:var(--space-lg)}
+  }
+
+  @media (orientation:portrait) and (max-height:42rem){
+    #ui.screen-pick{overflow-y:auto;overscroll-behavior:contain}
+    #ui.screen-pick #appToolbar{position:sticky;left:auto;right:auto;top:0;min-height:2.75rem;flex:none;margin-bottom:var(--space-xs)}
+    #ui.screen-pick .spacer{display:none!important}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:150ms!important;animation-iteration-count:1!important;transition-duration:150ms!important}
+    #ttRays,#ttC1,#ttC2,#ttLogo,#ttStart{animation:none!important}
+    #tutHole{box-shadow:0 0 0 4px var(--color-paper),0 0 0 9px oklch(from var(--color-sun) l c h / .5)}
+  }
 </style>
 </head>
 <body>
 <div id="phone">
-  <div id="ttFrame">
+  <section id="ttFrame" aria-labelledby="appTitle">
+    <h1 id="appTitle" class="srOnly">OjiMate — おじさんと集中するタイマー</h1>
     <div id="ttRays"></div>
     <div class="tt-cloud" id="ttC1"></div>
     <div class="tt-cloud" id="ttC2"></div>
@@ -267,7 +536,7 @@
     <div id="ttStage"></div>
 
     <div id="ttLogo">
-      <svg id="ttLogoMain" viewBox="0 0 400 128" aria-label="OjiMate">
+      <svg id="ttLogoMain" viewBox="0 0 400 128" aria-hidden="true" focusable="false">
         <defs>
           <linearGradient id="ttShine" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stop-color="#FFEFB8"/>
@@ -276,32 +545,33 @@
           </linearGradient>
         </defs>
         <g transform="scale(1,1.2)">
-          <text x="200" y="74" text-anchor="middle"
+          <text aria-hidden="true" x="200" y="74" text-anchor="middle"
                 font-family="Zen Maru Gothic, sans-serif" font-size="90" font-weight="700"
                 paint-order="stroke" stroke="#5A3E00" stroke-width="24" stroke-linejoin="round"
                 fill="#FFC64B">OjiMate</text>
-          <text x="200" y="74" text-anchor="middle"
+          <text aria-hidden="true" x="200" y="74" text-anchor="middle"
                 font-family="Zen Maru Gothic, sans-serif" font-size="90" font-weight="700"
                 fill="url(#ttShine)">OjiMate</text>
         </g>
       </svg>
-      <svg id="ttLogoSub" viewBox="0 0 470 60" aria-label="おぢさんと一蓮托生">
-        <text x="235" y="43" text-anchor="middle"
+      <svg id="ttLogoSub" viewBox="0 0 470 60" aria-hidden="true" focusable="false">
+        <text aria-hidden="true" x="235" y="43" text-anchor="middle"
               font-family="Zen Maru Gothic, sans-serif" font-size="41" font-weight="700"
               paint-order="stroke" stroke="#5A3E00" stroke-width="12" stroke-linejoin="round"
               fill="#FFF4DC">～おぢさんと一蓮托生～</text>
       </svg>
     </div>
 
-    <button id="ttStart" type="button">START</button>
-  </div>
+    <p id="ttLead">集中したぶんだけ、<br class="mobileBreak">ふたりの暮らしが育っていく。</p>
+    <button id="ttStart" type="button">おじさんと始める</button>
+    <p id="ttMeta">記録はこのブラウザに保存 · 音はあとから変更できます</p>
+  </section>
+  <main id="appMain" hidden inert aria-hidden="true">
   <div id="stage"></div>
   <div id="coin"></div>
-  <button id="backBtn" aria-label="戻る">←</button>
-  <button id="helpBtn" aria-label="使い方をもう一度見る">?</button>
   <div id="tapHint">家をタップすると今の状況が見られます</div>
-  <div id="focusHint">ゲージをタップで一時停止・やめる<br>おじさんをタップするとサボりだす</div>
-  <div id="tutOverlay" role="dialog" aria-modal="true" aria-label="OjiMateの使い方">
+  <div id="focusHint">残り時間から一時停止・終了ができます<br>おじさんをタップすると離席モードになります</div>
+  <div id="tutOverlay" role="dialog" aria-live="polite" aria-label="OjiMateの使い方">
     <div class="bar" id="tutBarT"></div>
     <div class="bar" id="tutBarB"></div>
     <div class="bar" id="tutBarL"></div>
@@ -311,12 +581,20 @@
     <button id="tutSkip" type="button">スキップ</button>
   </div>
   <div id="ui" class="screen-home">
-    <div id="topRow">
+    <div id="appToolbar" aria-label="アプリ操作">
+      <button id="backBtn" class="utilityBtn" type="button" aria-label="時間選択からホームに戻る">← <span>戻る</span></button>
+      <div id="toolbarActions">
+        <button id="infoBtn" class="utilityBtn" type="button" aria-expanded="false" aria-controls="topRow">記録</button>
+        <button id="soundBtn" class="utilityBtn" type="button" aria-pressed="false">音 OFF</button>
+        <button id="helpBtn" class="utilityBtn" type="button">使い方</button>
+      </div>
+    </div>
+    <div id="topRow" inert aria-hidden="true">
       <div class="card" id="home">
-        <div id="stageName" title="長押しで関係のプレビューを切替">ボロアパート</div>
+        <div id="stageName">ボロアパート</div>
         <div id="chips">
           <span class="chip" id="chipMoney">¥0</span>
-          <span class="chip b" id="chipDay">10日目</span>
+          <span class="chip b" id="chipDay">1日目</span>
           <span class="chip c" id="chipHours">0時間</span>
         </div>
         <div id="bar"><div id="barFill"></div></div>
@@ -339,17 +617,16 @@
 
     <!-- ===== 時間選択画面 ===== -->
     <div class="spacer on-pick"></div>
-    <div class="on-pick" id="pickCtrl">
-      <button class="btn primary" id="bPickStart">セッション開始</button>
-    </div>
     <div id="pickTop" class="card on-pick">
       <div id="pickCard">
         <div id="pickTime">00:50</div>
         <div id="pickTotal">合計: 50 分</div>
         <div id="pickSliderWrap">
-          <input type="range" id="pickSlider" min="5" max="120" step="5" value="50">
+          <label id="pickSliderLabel" for="pickSlider">集中する時間</label>
+          <input type="range" id="pickSlider" min="5" max="120" step="5" value="15" aria-describedby="pickAdvice pickTicks">
           <div id="pickSug"><div id="pickSugDot"></div></div>
-          <div id="pickTicks"><span>5m</span><span>1h</span><span>2h</span></div>
+          <div id="pickTicks"><span>5分</span><span>1時間</span><span>2時間</span></div>
+          <button id="pickAdvice" type="button">おすすめの <span id="pickAdviceValue">15分</span>にする</button>
         </div>
         <div id="pickTagLabel">セッションタグ</div>
         <div id="pickTags">
@@ -361,74 +638,152 @@
       </div>
     </div>
     <div class="card on-pick" id="sayPick"><div><div id="sayNamePick">おじさん</div><div id="sayTextPick">今日はどれくらいにする？</div></div></div>
+    <div class="on-pick" id="pickCtrl">
+      <button class="btn primary" id="bPickStart">この内容で始める</button>
+    </div>
 
     <!-- ===== 作業中画面 ===== -->
     <div id="focusGauge" class="on-focus">
-      <div class="gwrap">
+      <button id="gaugeToggle" class="gwrap" type="button" aria-expanded="false" aria-controls="focusMenu" aria-label="残り時間とセッション操作を開く">
         <svg id="gaugeSvg" viewBox="0 0 100 100">
           <rect id="gaugeBg" x="6" y="6" width="88" height="88" rx="18"/>
           <rect id="gaugeFg" x="6" y="6" width="88" height="88" rx="18"/>
         </svg>
-        <div id="gaugeTime">50:00</div>
-      </div>
-      <div id="focusMenu">
+        <div id="gaugeTime" role="timer" aria-live="off">15:00</div>
+        <div id="focusState">集中中</div>
+      </button>
+      <div id="focusMenu" hidden>
         <button class="btn sky" id="bPauseToggle">一時停止</button>
-        <button class="btn plain" id="bQuit"><span>やめる（長押し）</span><div class="holdRing"></div></button>
+        <button class="btn plain" id="bNudgeToggle">おじさんを休ませる</button>
+        <button class="btn plain" id="bQuit"><span>長押しで終了</span><div class="holdRing"></div></button>
       </div>
     </div>
+    <p id="appStatus" class="srOnly" aria-live="polite"></p>
   </div>
+  </main>
 </div>
 
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="./vendor/three.r128.min.js"
+        integrity="sha512-dLxUelApnYxpLt6K2iomGngnHO83iUvZytA3YjDUCjT0HDOHKXnVYdf3hU4JjM8uEhxf9nD1/ey98U3t2vZ0qQ=="></script>
 <script>
-let state='IDLE', lv=1;
+// Three.jsが読み込めればコアUIは起動する。WebGL生成は各シーンで試し、失敗時は2D操作パネルを残す。
+window.ojimateWebGLReady=Boolean(window.THREE);
+window.ojimateForce2D=(location.hostname==='localhost'||location.hostname==='127.0.0.1')&&new URLSearchParams(location.search).get('force2d')==='1';
+function showStartupFallback(){
+  const retry=document.getElementById('ttStart');
+  const canUseCore=typeof window.THREE!=='undefined'&&typeof window.launchApp==='function';
+  document.getElementById('ttStage').hidden=true;
+  document.getElementById('ttLead').textContent=canUseCore
+    ?'3Dを使えない環境のため、軽量表示でタイマーを開きます。'
+    :'アプリを読み込めませんでした。通信環境を確認してください。';
+  document.getElementById('ttMeta').textContent=canUseCore?'記録とタイマーはそのまま使えます':'記録データは消えません';
+  retry.textContent=canUseCore?'軽量版で始める':'読み込み直す';
+  retry.addEventListener('click',()=>{
+    if(!canUseCore){location.reload();return;}
+    document.getElementById('ttFrame')?.remove();
+    window.launchApp();
+  },{once:true});
+}
+if(!window.ojimateWebGLReady){
+  showStartupFallback();
+}else{
+let state='IDLE', lv=0;
 let uiScreen='HOME';         // 'HOME' | 'PICK' | 'FOCUS'
 let confirmingQuit=false;    // やめる長押し確認中フラグ（NUDGEとは独立）
 let sTime=0, poseT=0;
 let headUp=0, nodT=-1, sitAmt=0, lieAmt=0;
 let decayT=0, decayLv=0;
 let act=null, actT=0, actDur=0;
-const DEMO_SEC_PER_MIN=0.52, YEN_PER_MIN=240;
-let SESSION_MIN=50, SESSION_SEC=SESSION_MIN*DEMO_SEC_PER_MIN; // store 読み込み後に前回値で上書きする
+const queryParams=new URLSearchParams(location.search);
+const LOCAL_DEVELOPMENT=location.hostname==='localhost'||location.hostname==='127.0.0.1';
+const DEMO_MODE=LOCAL_DEVELOPMENT&&queryParams.get('demo')==='1';
+const SEC_PER_MIN=DEMO_MODE?0.52:60, YEN_PER_MIN=240;
+const reduceMotionQuery=matchMedia('(prefers-reduced-motion: reduce)');
+let SESSION_MIN=15, SESSION_SEC=SESSION_MIN*SEC_PER_MIN;
+let appStarted=false, mainLoopStarted=false, restoredSession=false;
+let sessionStartedAt=0, sessionBaseElapsed=0, lastSessionPersist=-1;
 
 // ===== 記憶（localStorage） =====
 // 関係は数値としてユーザーには見せず、口調や踏み込み方だけで伝える。
 // ここで積むのは「減らない」指標だけ：会った量（親しさ）と約束を守った量（信頼）。
-const STORE_KEY='ojimate_memory_v1';
+const STORE_KEY=DEMO_MODE?'ojimate_memory_demo_v1':'ojimate_memory_v1';
 function todayStr(d){ d=d||new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function defaultStore(){
   return {
+    version:2,
     firstVisitDay:null, lastVisitDay:null,
     totalDays:0, completedSessions:0, interruptedSessions:0, totalFocusMin:0,
     recent:[], // 直近の完走/中断の履歴（傾向判定用、古いものから捨てる）
     lastQuestionDay:null, todayAnswer:null, // 'tough' | 'ok'
     money:0, stageIdx:0,
-    lastSessionMin:50,
+    lastSessionMin:null, activeSession:null, soundEnabled:false,
     tutorialHome:false, tutorialFocus:false, tutorialIntro:false, // 初回だけのチュートリアル表示を出したかどうか
     ojiMateNightSessions:0,
-    agentEndpoint:'', agentSecret:'', // おじさんのセリフをAIに読ませたい人だけ設定するプロキシ（worker/参照）
+    agentEndpoint:'', // 秘密値は永続保存しない（このタブの sessionStorage のみ）
   };
+}
+const finiteNumber=(value,fallback,min=0,max=Number.MAX_SAFE_INTEGER)=>{
+  const number=Number(value);
+  return Number.isFinite(number)?Math.min(max,Math.max(min,number)):fallback;
+};
+function sanitizeStore(value){
+  const base=defaultStore();
+  if(!value||typeof value!=='object'||Array.isArray(value)) return base;
+  const safe={...base};
+  ['firstVisitDay','lastVisitDay','lastQuestionDay'].forEach(key=>{
+    safe[key]=typeof value[key]==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value[key])?value[key]:null;
+  });
+  safe.totalDays=finiteNumber(value.totalDays,0,0,100000);
+  safe.completedSessions=finiteNumber(value.completedSessions,0,0,100000);
+  safe.interruptedSessions=finiteNumber(value.interruptedSessions,0,0,100000);
+  safe.totalFocusMin=finiteNumber(value.totalFocusMin,0,0,10000000);
+  safe.money=finiteNumber(value.money,0,0,1000000000);
+  safe.stageIdx=Math.floor(finiteNumber(value.stageIdx,0,0,4));
+  safe.lastSessionMin=value.lastSessionMin==null?null:Math.round(finiteNumber(value.lastSessionMin,15,5,120)/5)*5;
+  safe.todayAnswer=value.todayAnswer==='tough'||value.todayAnswer==='ok'?value.todayAnswer:null;
+  safe.soundEnabled=value.soundEnabled===true;
+  safe.tutorialHome=value.tutorialHome===true;
+  safe.tutorialFocus=value.tutorialFocus===true;
+  safe.tutorialIntro=value.tutorialIntro===true;
+  safe.ojiMateNightSessions=finiteNumber(value.ojiMateNightSessions,0,0,100000);
+  safe.agentEndpoint=typeof value.agentEndpoint==='string'?value.agentEndpoint.slice(0,500):'';
+  safe.recent=Array.isArray(value.recent)?value.recent.slice(-12).map(item=>({
+    ok:item&&item.ok===true,
+    min:Math.floor(finiteNumber(item&&item.min,0,0,120)),
+    day:item&&typeof item.day==='string'?item.day.slice(0,10):todayStr(),
+    tag:item&&typeof item.tag==='string'?item.tag.slice(0,12):'',
+  })):[];
+  const active=value.activeSession;
+  if(active&&typeof active==='object'){
+    safe.activeSession={
+      elapsedSec:finiteNumber(active.elapsedSec,0,0,120*60),
+      durationMin:Math.round(finiteNumber(active.durationMin,15,5,120)/5)*5,
+      tag:typeof active.tag==='string'?active.tag.slice(0,12):'勉強',
+      running:active.running===true,
+      updatedAt:finiteNumber(active.updatedAt,Date.now(),0,Date.now()),
+    };
+  }
+  return safe;
 }
 function loadStore(){
   try{
     const raw=localStorage.getItem(STORE_KEY);
-    if(raw){ const parsed=JSON.parse(raw); return Object.assign(defaultStore(), parsed); }
+    if(raw) return sanitizeStore(JSON.parse(raw));
   }catch(e){}
   return defaultStore();
 }
 function saveStore(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(store)); }catch(e){} }
 const store=loadStore();
-SESSION_MIN=store.lastSessionMin||50; SESSION_SEC=SESSION_MIN*DEMO_SEC_PER_MIN;
+SESSION_MIN=store.lastSessionMin||suggestedMinutes(); SESSION_SEC=SESSION_MIN*SEC_PER_MIN;
 
 function daysSinceLastVisit(){
   if(!store.lastVisitDay) return 0;
   const a=new Date(store.lastVisitDay+'T00:00:00'), b=new Date(todayStr()+'T00:00:00');
   return Math.max(0, Math.round((b-a)/86400000));
 }
-let visitAbsence=0; // 起動時点の空白日数（訪問記録の前に確定させておく）
+let visitAbsence=daysSinceLastVisit(); // 訪問記録の前に確定させておく
 function recordVisit(){
-  visitAbsence=daysSinceLastVisit();
   const t=todayStr();
   if(store.lastVisitDay!==t){ store.totalDays+=1; store.lastVisitDay=t; }
   if(!store.firstVisitDay) store.firstVisitDay=t;
@@ -452,13 +807,11 @@ function recentBadStreak(){ // 直近の中断続き（信頼の到達値は下�
   return n;
 }
 function isLateNight(){ const h=new Date().getHours(); return h>=0&&h<5; }
-function recordSessionOutcome(ok,min){
+function recordSessionOutcome(ok,min,tag){
   if(ok) store.completedSessions+=1; else store.interruptedSessions+=1;
-  store.totalFocusMin+=min;
-  store.recent.push({ok,min,day:todayStr()});
+  store.recent.push({ok,min,day:todayStr(),tag});
   if(store.recent.length>12) store.recent.shift();
   if(isLateNight()) store.ojiMateNightSessions+=1;
-  saveStore();
 }
 function suggestedMinutes(){
   if(store.todayAnswer==='tough') return 15;
@@ -477,6 +830,7 @@ function answerDayQuestion(a){
 if(store.lastQuestionDay!==todayStr()) store.todayAnswer=null;
 
 let money=store.money, totalMin=store.totalFocusMin, stageIdx=store.stageIdx;
+let soundEnabled=store.soundEnabled;
 
 const SLACK=[
   {at:6, line:'（あくびをした）'},
@@ -515,16 +869,33 @@ const C={
 };
 
 const phone=document.getElementById('phone');
+const stageHost=document.getElementById('stage');
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0xA9D3E2);
 scene.fog=new THREE.Fog(0xA9D3E2,34,64);
-let W=phone.clientWidth||400,H=phone.clientHeight||711;
+let W=stageHost.clientWidth||400,H=stageHost.clientHeight||711;
 const FRUST=13;
 const camera=new THREE.OrthographicCamera(-FRUST*W/H/2,FRUST*W/H/2,FRUST/2,-FRUST/2,0.1,220);
-const renderer=new THREE.WebGLRenderer({antialias:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-document.getElementById('stage').appendChild(renderer.domElement);
+let renderer=null;
+const cv=document.createElement('canvas');
+cv.setAttribute('role','img');
+cv.setAttribute('aria-label','おじさんと暮らす庭の3D風景。ドラッグで見回せます');
+stageHost.appendChild(cv);
+function initializeMainRenderer(){
+  if(renderer)return true;
+  try{
+    if(window.ojimateForce2D) throw new Error('2D fallback requested');
+    renderer=new THREE.WebGLRenderer({canvas:cv,antialias:true});
+    renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+    renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+    resize();return true;
+  }catch(e){
+    renderer=null;cv.hidden=true;
+    const notice=document.createElement('p');notice.className='renderNotice';notice.setAttribute('role','status');
+    notice.textContent='3D表示を開始できませんでした。タイマーと記録は操作パネルからそのまま使えます。';
+    stageHost.appendChild(notice);return false;
+  }
+}
 
 const hemi=new THREE.HemisphereLight(0xCFE2EC,0x6F8A56,0.58); scene.add(hemi);
 const sun=new THREE.DirectionalLight(0xFFF2DC,0.62);
@@ -1063,10 +1434,9 @@ function updCam(){
   camera.left=-f*W/H/2;camera.right=f*W/H/2;camera.top=f/2;camera.bottom=-f/2;
   camera.updateProjectionMatrix();
 }
-function resize(){W=phone.clientWidth;H=phone.clientHeight;renderer.setSize(W,H);updCam();}
+function resize(){W=Math.max(1,stageHost.clientWidth);H=Math.max(1,stageHost.clientHeight);if(renderer)renderer.setSize(W,H);updCam();if(window.__ojimateRepositionTutorial)window.__ojimateRepositionTutorial();}
 addEventListener('resize',resize); resize();
 const pts=new Map(); let pinch0=0,zoom0=1;
-const cv=renderer.domElement;
 let downPt=null, dragDist=0;
 cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
   if(pts.size===1){downPt={x:e.clientX,y:e.clientY};dragDist=0;}
@@ -1090,7 +1460,8 @@ cv.addEventListener('pointerup',up); cv.addEventListener('pointercancel',up);
 cv.addEventListener('wheel',e=>{e.preventDefault();zoom=Math.max(0.55,Math.min(3.4,zoom*(e.deltaY>0?0.94:1.06)));updCam();hideDragHint();},{passive:false});
 let dragHintEl=null;
 function hideDragHint(){ if(dragHintEl){dragHintEl.style.opacity='0'; setTimeout(()=>dragHintEl&&dragHintEl.remove(),400); dragHintEl=null; } }
-requestAnimationFrame(()=>{
+function showDragHint(){
+  if(dragHintEl) return;
   dragHintEl=document.createElement('div');
   dragHintEl.textContent='ドラッグで角度を変えられます';
   dragHintEl.style.cssText='position:absolute;left:50%;bottom:118px;transform:translateX(-50%);'+
@@ -1098,23 +1469,22 @@ requestAnimationFrame(()=>{
     'border-radius:999px;pointer-events:none;transition:opacity .4s;z-index:5;white-space:nowrap;';
   phone.appendChild(dragHintEl);
   setTimeout(hideDragHint,4500);
-});
+}
 
 // ===== 発話 =====
 const LINES={
   0:{name:'おじさん',idle:'…えっ、見てるん？　まあ、ええけど。',
-     start:'50分な。ちゃんとやるって。パソコン開くわ。',
+     start:'この時間な。ほな、パソコン開くわ。',
      nudge:'（手が止まった）',back:'（また画面に向かった）',
-     done:'50分できた。1万2千円。……ちょっとええ気分やわ。',
+     done:'できたな。……ちょっとええ気分やわ。',
      stop:'まあ、やった分はもらえるし。ええよ。'},
   1:{name:'おじさん',idle:'お、来たな。今日どうする？',start:'よっしゃ、やるか。',
      nudge:'（手が止まった）',back:'（うなずいて、画面に戻った）',
-     done:'50分。今週これで4回目やで。',stop:'今日はここまでにしとこか。'},
+     done:'終わったな。今日の分、ようやった。',stop:'今日はここまでにしとこか。'},
   2:{name:'おじさん',idle:'昨日、遅かったやろ。',start:'今日は短めでええんちゃう。合わせるわ。',
      nudge:'（手が止まった）',back:'（画面に戻った）',
      done:'うん。おつかれ。',stop:'ええよ。'}
 };
-const DAYS=['1日目','10日目','30日目'];
 const sayBox=document.getElementById('say'),sayText=document.getElementById('sayText'),sayName=document.getElementById('sayName');
 function say(k){const L=LINES[lv];sayName.textContent=L.name;sayText.textContent=L[k];
   sayBox.classList.toggle('quiet',k==='nudge'||k==='back');}
@@ -1173,30 +1543,40 @@ function sayIdle(){ sayLine(pickIdleLine()); }
 // トガメと同じ構成：APIキーをブラウザに置けないので、Cloudflare Worker等の
 // プロキシを自分で立てて住所と合言葉をここに入れる（worker/ を参照）。
 // 未設定ならローカルのセリフ（pickIdleLine/pickTimeLine等）だけで動く。
+let agentSecret='';
+try{ agentSecret=sessionStorage.getItem('ojimate_agent_secret')||''; }catch(e){}
 async function askAgent({ system, user, onDelta }){
   if(!store.agentEndpoint) return null;
-  const res=await fetch(store.agentEndpoint,{
-    method:'POST',
-    headers:{ 'content-type':'application/json', 'x-ojimate-key': store.agentSecret||'' },
-    body: JSON.stringify({ system, user }),
-  });
-  if(!res.ok) throw new Error((await res.text()).slice(0,300)||String(res.status));
-  const reader=res.body.getReader(), dec=new TextDecoder();
-  let buf='', out='';
-  for(;;){
-    const {value,done}=await reader.read();
-    if(done) break;
-    buf+=dec.decode(value,{stream:true});
-    const lines=buf.split('\n'); buf=lines.pop();
-    for(const line of lines){
-      if(!line.startsWith('data:')) continue;
-      let ev; try{ ev=JSON.parse(line.slice(5).trim()); }catch(e){ continue; }
-      if(ev.type==='content_block_delta'&&ev.delta&&ev.delta.type==='text_delta'){
-        out+=ev.delta.text; if(onDelta) onDelta(ev.delta.text,out);
+  const controller=new AbortController();
+  const timeout=setTimeout(()=>controller.abort(),12000);
+  try{
+    const headers={'content-type':'application/json'};
+    if(agentSecret) headers['x-ojimate-key']=agentSecret;
+    const res=await fetch(store.agentEndpoint,{
+      method:'POST', headers, signal:controller.signal,
+      body:JSON.stringify({system,user}),
+    });
+    if(!res.ok) throw new Error('AI応答エラー: '+res.status);
+    if(!res.body) throw new Error('AI応答が空です');
+    const reader=res.body.getReader(), dec=new TextDecoder();
+    let buf='', out='';
+    for(;;){
+      const {value,done}=await reader.read();
+      if(done) break;
+      buf+=dec.decode(value,{stream:true});
+      const lines=buf.split('\n'); buf=lines.pop();
+      for(const line of lines){
+        if(!line.startsWith('data:')) continue;
+        let ev; try{ ev=JSON.parse(line.slice(5).trim()); }catch(e){ continue; }
+        if(ev.type==='content_block_delta'&&ev.delta&&ev.delta.type==='text_delta'){
+          out+=ev.delta.text; if(onDelta) onDelta(ev.delta.text,out);
+        }
       }
     }
+    return out.trim();
+  }finally{
+    clearTimeout(timeout);
   }
-  return out.trim();
 }
 // 人格。「関西弁で軽口を叩くが、行動は責めない」という既存のLINES/pickXxxLineの
 // トーンを踏襲させる。命令形やダメ出しを禁じているのは、統制的な言い方をされると
@@ -1226,12 +1606,20 @@ function agentPickPrompt(){
 function configureAgent(){
   const endpoint=window.prompt('おじさんに喋らせるAIエージェント（Cloudflare Worker等）の住所。\n空にすると固定のセリフに戻る。', store.agentEndpoint||'');
   if(endpoint===null) return;
-  store.agentEndpoint=endpoint.trim();
-  if(store.agentEndpoint){
-    const secret=window.prompt('合言葉（Workerに設定したものと同じ文字列）', store.agentSecret||'');
-    if(secret!==null) store.agentSecret=secret.trim();
+  const nextEndpoint=endpoint.trim();
+  if(nextEndpoint){
+    let parsed;
+    try{ parsed=new URL(nextEndpoint); }catch(e){ window.alert('https:// で始まる正しい住所を入力してください。'); return; }
+    const local=/^(localhost|127\.0\.0\.1)$/.test(parsed.hostname);
+    if(parsed.protocol!=='https:'&&!local){ window.alert('安全のため https:// の接続先だけを利用できます。'); return; }
+    const secret=window.prompt('合言葉（このタブを閉じると消えます）','');
+    if(secret===null) return;
+    store.agentEndpoint=parsed.href;
+    agentSecret=secret.trim();
+    try{ sessionStorage.setItem('ojimate_agent_secret',agentSecret); }catch(e){}
   }else{
-    store.agentSecret='';
+    store.agentEndpoint=''; agentSecret='';
+    try{ sessionStorage.removeItem('ojimate_agent_secret'); }catch(e){}
   }
   saveStore();
 }
@@ -1245,12 +1633,14 @@ bindLongPress(document.getElementById('sayNamePick'), configureAgent);
 
 function setLv(n){
   lv=n;
-  document.getElementById('chipDay').textContent=DAYS[n];
+  document.getElementById('chipDay').textContent=Math.max(1,store.totalDays)+'日目';
   if(state==='IDLE'&&decayLv===0&&!uiEl.classList.contains('intro')) sayIdle();
 }
 // 関係プレビューの切替は本番UIには出さず、家の名前の長押しに隠しておく（開発・プレゼン用）
 (function(){
+  if(!DEMO_MODE) return;
   const el=document.getElementById('stageName');
+  el.title='長押しで関係のプレビューを切替';
   let pressT=null;
   const start=()=>{ pressT=setTimeout(()=>{ setLv((lv+1)%3); pressT=null; },600); };
   const cancel=()=>{ if(pressT){ clearTimeout(pressT); pressT=null; } };
@@ -1266,25 +1656,29 @@ function setLv(n){
 const pickSlider=document.getElementById('pickSlider'), pickTime=document.getElementById('pickTime'),
       pickTotal=document.getElementById('pickTotal'), pickSugDot=document.getElementById('pickSugDot'),
       pickTagsEl=document.getElementById('pickTags'), sayTextPick=document.getElementById('sayTextPick'),
-      sayPickBox=document.getElementById('sayPick');
+      sayPickBox=document.getElementById('sayPick'), pickAdvice=document.getElementById('pickAdvice'),
+      pickAdviceValue=document.getElementById('pickAdviceValue');
 let sessionTag='勉強';
 function minToClock(min){ return String(Math.floor(min/60)).padStart(2,'0')+':'+String(min%60).padStart(2,'0'); }
 function refreshLenSuggestion(){ /* 互換用：呼び出し元は残すが、初期値の上書きはしない */ }
 function updatePickDisplay(){
   const min=+pickSlider.value;
   pickTime.textContent=minToClock(min);
-  pickTotal.textContent='合計: '+min+' 分 ・ ¥'+ (min*YEN_PER_MIN).toLocaleString('ja-JP') + ' 予定';
+  pickTotal.textContent='合計: '+min+' 分 ・ ¥'+ (min*YEN_PER_MIN).toLocaleString('ja-JP') + ' 予定'+(DEMO_MODE?' ・ デモ速度':'');
+  pickSlider.setAttribute('aria-valuetext',min+'分');
 }
 function placeSugDot(){
   const sug=suggestedMinutes();
   const pct=(sug-5)/(120-5)*100;
   pickSugDot.style.left=pct+'%';
+  pickAdviceValue.textContent=sug+'分';
 }
 let pickLineToken=0; // 画面を出たり入ったりしたときに古いAI応答で上書きしないための世代カウンタ
 function openPickScreen(){
   pickSlider.value=SESSION_MIN; // 前回選んだ時間（起動時に store から反映済み）
   updatePickDisplay(); placeSugDot();
-  sayTextPick.textContent=pickTimeLine(); // まずローカルの言い分けをすぐ出す
+  const fallbackLine=pickTimeLine();
+  sayTextPick.textContent=fallbackLine; // まずローカルの言い分けをすぐ出す
   sayPickBox.classList.remove('quiet');
   const myToken=++pickLineToken;
   if(!store.agentEndpoint) return;
@@ -1297,11 +1691,16 @@ function openPickScreen(){
     if(myToken!==pickLineToken) return;
     sayPickBox.classList.remove('quiet');
     if(text) sayTextPick.textContent=text;
-  }).catch(()=>{ if(myToken===pickLineToken) sayPickBox.classList.remove('quiet'); });
+  }).catch(()=>{ if(myToken===pickLineToken){sayTextPick.textContent=fallbackLine;sayPickBox.classList.remove('quiet');appStatus.textContent='AIに接続できなかったため、端末内のセリフを表示しています';} });
 }
 pickSlider.addEventListener('input',()=>{
-  SESSION_MIN=+pickSlider.value; SESSION_SEC=SESSION_MIN*DEMO_SEC_PER_MIN;
+  SESSION_MIN=+pickSlider.value; SESSION_SEC=SESSION_MIN*SEC_PER_MIN;
   updatePickDisplay();
+});
+pickAdvice.addEventListener('click',()=>{
+  pickSlider.value=suggestedMinutes();
+  pickSlider.dispatchEvent(new Event('input',{bubbles:true}));
+  pickSlider.focus();
 });
 pickTagsEl.addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b) return;
@@ -1344,16 +1743,16 @@ function updHUD(){
   chipHours.textContent=(totalMin/60).toFixed(1)+'時間';
   stageName.textContent=STAGES[stageIdx].name;
   const need=STAGES[stageIdx].need;
-  if(need===Infinity){barFill.style.width='100%';barNote.textContent='これ以上は望まん';}
+  if(need===Infinity){barFill.style.transform='scaleX(1)';barNote.textContent='これ以上は望まん';}
   else{const prev=stageIdx===0?0:STAGES[stageIdx-1].need;
-    barFill.style.width=Math.min(100,(money-prev)/(need-prev)*100)+'%';
+    barFill.style.transform='scaleX('+Math.max(0,Math.min(1,(money-prev)/(need-prev)))+')';
     barNote.textContent='次の家まで あと '+yen(need-money);}
 }
 function popCoin(n){coin.textContent='+'+yen(n);coin.classList.remove('go');void coin.offsetWidth;coin.classList.add('go');}
 function addMoney(min){
-  money+=min*YEN_PER_MIN; totalMin+=min; popCoin(min*YEN_PER_MIN);
+  money+=min*YEN_PER_MIN; totalMin+=min; if(min>0)popCoin(min*YEN_PER_MIN);
   while(stageIdx<STAGES.length-1&&money>=STAGES[stageIdx].need){stageIdx++;setHouse(stageIdx,true);updateHaramaki(stageIdx);}
-  store.money=money; store.totalFocusMin=totalMin; store.stageIdx=stageIdx; saveStore();
+  store.money=money; store.totalFocusMin=totalMin; store.stageIdx=stageIdx;
   updHUD();
 }
 
@@ -1361,7 +1760,9 @@ function addMoney(min){
 let audioCtx=null, master=null, droneOsc=[], windGainNode=null, guitarGain=null;
 function ensureAudio(){
   if(audioCtx) return;
-  audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  const AudioCtor=window.AudioContext||window.webkitAudioContext;
+  if(!AudioCtor) throw new Error('このブラウザでは音を再生できません');
+  audioCtx=new AudioCtor();
   master=audioCtx.createGain(); master.gain.value=0; master.connect(audioCtx.destination);
   const bufSize=audioCtx.sampleRate*2;
   const buf=audioCtx.createBuffer(1,bufSize,audioCtx.sampleRate);
@@ -1414,7 +1815,9 @@ function scheduleGuitar(){
   }
 }
 function startMusic(){
-  ensureAudio(); audioCtx.resume();
+  if(!soundEnabled) return;
+  try{ ensureAudio(); }catch(e){ soundEnabled=false; store.soundEnabled=false; saveStore(); updateSoundButton(); return; }
+  audioCtx.resume().catch(()=>{});
   master.gain.cancelScheduledValues(audioCtx.currentTime);
   master.gain.linearRampToValueAtTime(1,audioCtx.currentTime+1.2);
   if(!guitarTimer){
@@ -1429,7 +1832,7 @@ function stopMusic(){
   if(guitarTimer){ clearInterval(guitarTimer); guitarTimer=null; }
 }
 function playKeyClick(){
-  if(!audioCtx) return;
+  if(!soundEnabled||!audioCtx) return;
   const tt=audioCtx.currentTime;
   const o=audioCtx.createOscillator(); o.type='square'; o.frequency.value=1700+Math.random()*700;
   const g=audioCtx.createGain();
@@ -1447,18 +1850,25 @@ const CAM_GREET={az:Math.PI*0.5-0.22,   el:0.30, zoom:2.9, lx:0.1, ly:0.95,lz:3.
 const CAM_PICK ={az:Math.PI*0.5-0.30,   el:0.46, zoom:1.75,lx:0.15,ly:0.95,lz:2.5};
 const CAM_FOCUS={az:Math.PI*0.5-0.55,   el:0.38, zoom:2.35,lx:0.05,ly:0.75,lz:2.0};
 let camTween=null;
-function startCamTween(to,dur){ camTween={t:0,dur:dur||0.75,from:{az,el,zoom,lx:lookX,ly:lookY,lz:lookZ},to}; }
+function startCamTween(to,dur){
+  if(reduceMotionQuery.matches){ az=to.az;el=to.el;zoom=to.zoom;lookX=to.lx;lookY=to.ly;lookZ=to.lz;camTween=null;updCam();return; }
+  camTween={t:0,dur:dur||0.75,from:{az,el,zoom,lx:lookX,ly:lookY,lz:lookZ},to};
+}
 const lerp=(a,b,k)=>a+(b-a)*k;
 
 // ===== 状態機械 =====
 const bStart=document.getElementById('bStart');
 const uiEl=document.getElementById('ui');
+const appMain=document.getElementById('appMain');
 const backBtn=document.getElementById('backBtn');
+const infoBtn=document.getElementById('infoBtn');
+const soundBtn=document.getElementById('soundBtn');
 const helpBtn=document.getElementById('helpBtn');
 const bPickStart=document.getElementById('bPickStart');
 const gaugeFg=document.getElementById('gaugeFg'),gaugeTime=document.getElementById('gaugeTime');
-const focusGaugeEl=document.getElementById('focusGauge'),focusMenuEl=document.getElementById('focusMenu');
-const bPauseToggle=document.getElementById('bPauseToggle'),bQuit=document.getElementById('bQuit');
+const focusGaugeEl=document.getElementById('focusGauge'),focusMenuEl=document.getElementById('focusMenu'),gaugeToggle=document.getElementById('gaugeToggle');
+const bPauseToggle=document.getElementById('bPauseToggle'),bNudgeToggle=document.getElementById('bNudgeToggle'),bQuit=document.getElementById('bQuit');
+const focusStateEl=document.getElementById('focusState'),appStatus=document.getElementById('appStatus');
 const holdRingEl=bQuit.querySelector('.holdRing');
 const GP=4*88-8*18+2*Math.PI*18; gaugeFg.style.strokeDasharray=GP; // 角丸正方形の周長
 
@@ -1470,14 +1880,35 @@ function setScreen(s){
   uiEl.classList.remove('screen-home','screen-pick','screen-focus');
   uiEl.classList.add('screen-'+s.toLowerCase());
   backBtn.style.display=(s==='PICK')?'flex':'none';
+  infoBtn.style.display=(s==='HOME')?'flex':'none';
   helpBtn.style.display=(s==='HOME')?'flex':'none';
-  focusGaugeEl.classList.remove('open');
+  setFocusMenu(false);
+  if(s!=='HOME') toggleInfo(false);
+  else if(infoPinned()) toggleInfo(true);
   if(s!=='FOCUS') focusHintEl.classList.remove('show'); // 途中でやめても居座らせない
+  appStatus.textContent=s==='HOME'?'ホーム画面':s==='PICK'?'集中時間を選ぶ画面':'集中セッション画面';
 }
 function setButtons(){
   bStart.disabled=(state!=='IDLE');
-  focusGaugeEl.classList.toggle('paused',state==='PAUSED');
-  bPauseToggle.textContent=state==='PAUSED'?'再開':'一時停止';
+  const stopped=state==='PAUSED'||state==='NUDGE';
+  focusGaugeEl.classList.toggle('paused',stopped);
+  focusGaugeEl.classList.toggle('nudging',state==='NUDGE');
+  bPauseToggle.textContent=stopped?'再開':'一時停止';
+  bNudgeToggle.textContent=state==='NUDGE'?'集中に戻る':'おじさんを休ませる';
+  bNudgeToggle.disabled=state==='PAUSED';
+  focusStateEl.textContent=state==='PAUSED'?'一時停止':state==='NUDGE'?'ひと休み':'集中中';
+}
+function setFocusMenu(open){
+  const next=Boolean(open)&&uiScreen==='FOCUS';
+  const returnFocus=!next&&focusMenuEl.contains(document.activeElement)&&uiScreen==='FOCUS';
+  focusGaugeEl.classList.toggle('open',next);
+  focusMenuEl.hidden=!next;
+  gaugeToggle.setAttribute('aria-expanded',String(next));
+  if(returnFocus) requestAnimationFrame(()=>gaugeToggle.focus({preventScroll:true}));
+}
+function updateSoundButton(){
+  soundBtn.textContent='音 '+(soundEnabled?'ON':'OFF');
+  soundBtn.setAttribute('aria-pressed',String(soundEnabled));
 }
 function resetDecay(){decayT=0;decayLv=0;cig.visible=false;phoneProp.visible=false;chips.visible=false;}
 function setState(s){
@@ -1491,10 +1922,12 @@ function setState(s){
 const GREET_POS=new THREE.Vector3(0.4,0,2.9);
 bStart.onclick=()=>{
   if(state!=='IDLE') return;
+  hideDragHint();
   setScreen('PICK'); openPickScreen();
   act=null; waitT=0; wp.copy(GREET_POS); // 手前へ歩かせる（wander再開は下のガードで止める）
   startCamTween(CAM_PICK);
-  if(tutActive&&tutStepKey==='home') tutGoto('pick');
+  if(tutActive&&tutStepKey==='home') tutGoto('pick-settings');
+  else setTimeout(()=>pickSlider.focus(),80);
 };
 backBtn.onclick=()=>{
   if(uiScreen!=='PICK') return;
@@ -1514,45 +1947,96 @@ bPickStart.onclick=()=>{
       setTimeout(()=>focusHintEl.classList.remove('show'),5200); }, 900);
     store.tutorialFocus=true; saveStore();
   }
-  if(tutActive&&tutStepKey==='pick') tutGoto('focus');
+  if(tutActive&&tutStepKey==='pick-start') tutGoto('focus');
 };
+function currentSessionSeconds(){
+  if(state==='FOCUS'&&sessionStartedAt) return sessionBaseElapsed+Math.max(0,(Date.now()-sessionStartedAt)/1000);
+  return sessionBaseElapsed;
+}
+function persistActiveSession(){
+  if(uiScreen!=='FOCUS') return;
+  const elapsedSec=Math.min(SESSION_SEC,currentSessionSeconds());
+  store.activeSession={durationMin:SESSION_MIN,elapsedSec,tag:sessionTag,running:state==='FOCUS',updatedAt:Date.now()};
+  saveStore();
+}
+function pauseSession(nextState='PAUSED'){
+  if(state!=='FOCUS') return;
+  sessionBaseElapsed=Math.min(SESSION_SEC,currentSessionSeconds());
+  sessionStartedAt=0; sTime=sessionBaseElapsed;
+  setState(nextState); stopMusic(); persistActiveSession();
+  appStatus.textContent=nextState==='NUDGE'?'おじさんもタイマーも休憩中です':'タイマーを一時停止しました';
+}
+function resumeSession(){
+  if(state!=='PAUSED'&&state!=='NUDGE') return;
+  sessionStartedAt=Date.now();
+  setState('FOCUS'); startMusic(); persistActiveSession();
+  appStatus.textContent='集中を再開しました';
+}
 function startSession(){
-  sTime=0;setState('FOCUS');say('start');
+  sTime=0;sessionBaseElapsed=0;sessionStartedAt=Date.now();lastSessionPersist=-1;
+  setState('FOCUS');say('start');
   startCamTween(CAM_FOCUS); startMusic();
-  focusGaugeEl.classList.remove('open');
+  setFocusMenu(false); persistActiveSession();
 }
 function endSession(ok){
-  const min=ok?SESSION_MIN:Math.max(1,Math.round(sTime/SESSION_SEC*SESSION_MIN));
+  if(uiScreen!=='FOCUS') return;
+  resetQuitTap();
+  sTime=Math.min(SESSION_SEC,currentSessionSeconds());
+  const min=ok?SESSION_MIN:Math.floor(sTime/SEC_PER_MIN);
   addMoney(min); addLog(min,ok,sessionTag);
-  recordSessionOutcome(ok,min);
+  recordSessionOutcome(ok,min,sessionTag);
+  store.activeSession=null; saveStore();
+  sessionStartedAt=0;sessionBaseElapsed=0;lastSessionPersist=-1;
   if(ok){ clearNeglect(); fireSparkle(); }
   setState('IDLE'); setScreen('HOME');
   startCamTween(CAM_IDLE); stopMusic();
-  focusGaugeEl.classList.remove('open');
+  setFocusMenu(false);
   sayLine(ok?pickDoneLine():pickStopLine());
   if(ok) nodT=0; else headUp=-0.32;
   if(shouldAskDayQuestion(ok)) showDayQuestion();
-  if(tutActive&&tutStepKey==='focus') tutGoto('done');
+  if(tutActive) tutClose();
+  appStatus.textContent=ok?SESSION_MIN+'分の集中を完了しました':min>0?min+'分を記録して終了しました':'1分未満で終了しました';
+  requestAnimationFrame(()=>{
+    const target=ok&&!dayQEl.hidden?document.getElementById('dqTough'):bStart;
+    target.focus({preventScroll:true});
+  });
 }
 
 // ゲージをタップ：一時停止/再開とやめるのメニューを開閉
-focusGaugeEl.addEventListener('click',e=>{ e.stopPropagation(); focusGaugeEl.classList.toggle('open'); });
+gaugeToggle.addEventListener('click',e=>{ e.stopPropagation(); setFocusMenu(!focusGaugeEl.classList.contains('open')); });
 // メニュー外をタップしたら閉じる
 uiEl.addEventListener('pointerdown',e=>{
   if(!focusGaugeEl.classList.contains('open')) return;
   if(focusGaugeEl.contains(e.target)) return;
-  focusGaugeEl.classList.remove('open');
+  setFocusMenu(false);
+});
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape'||tutActive||!focusGaugeEl.classList.contains('open')) return;
+  e.preventDefault();
+  setFocusMenu(false);
 });
 bPauseToggle.onclick=(e)=>{
   e.stopPropagation();
-  if(state==='FOCUS'||state==='NUDGE'){ setState('PAUSED'); stopMusic(); }
-  else if(state==='PAUSED'){ setState('FOCUS'); startMusic(); }
-  focusGaugeEl.classList.remove('open');
+  if(state==='FOCUS') pauseSession('PAUSED');
+  else if(state==='PAUSED'||state==='NUDGE') resumeSession();
+  setFocusMenu(false);
+};
+bNudgeToggle.onclick=(e)=>{
+  e.stopPropagation();
+  if(state==='FOCUS'){ pauseSession('NUDGE'); say('nudge'); }
+  else if(state==='NUDGE'){ resumeSession(); say('back'); }
+  setFocusMenu(false);
+};
+soundBtn.onclick=()=>{
+  soundEnabled=!soundEnabled; store.soundEnabled=soundEnabled; saveStore(); updateSoundButton();
+  if(soundEnabled&&state==='FOCUS') startMusic(); else stopMusic();
+  appStatus.textContent='音を'+(soundEnabled?'オン':'オフ')+'にしました';
 };
 
 // ===== やめる：長押し（1.4秒）でのみ確定。押している間、おじさんがこちらを向いて確認する =====
 const QUIT_HOLD_MS=1400;
 let quitHoldStart=0, quitHoldRAF=null;
+let quitTapArmed=false, quitTapTimer=null;
 function quitConfirmLine(){
   const t=closenessTier();
   if(t>=2) return 'ええけど。ほんまに？';
@@ -1580,20 +2064,46 @@ function quitHoldCancel(fade){
   if(quitHoldRAF){ cancelAnimationFrame(quitHoldRAF); quitHoldRAF=null; }
   if(fade!==false) sayBox.classList.remove('show-confirm');
 }
-bQuit.addEventListener('pointerdown',e=>{ e.preventDefault(); e.stopPropagation(); bQuit.setPointerCapture(e.pointerId); quitHoldBegin(); });
+function resetQuitTap(){
+  quitTapArmed=false;
+  if(quitTapTimer){clearTimeout(quitTapTimer);quitTapTimer=null;}
+  bQuit.querySelector('span').textContent='長押しで終了';
+}
+bQuit.addEventListener('pointerdown',e=>{ e.stopPropagation(); bQuit.setPointerCapture(e.pointerId); quitHoldBegin(); });
 bQuit.addEventListener('pointerup',()=>quitHoldCancel());
 bQuit.addEventListener('pointercancel',()=>quitHoldCancel());
 bQuit.addEventListener('pointerleave',()=>quitHoldCancel());
-bQuit.addEventListener('click',e=>{ e.stopPropagation(); }); // タップの度にゲージが開閉トグルされるのを防ぐ
+bQuit.addEventListener('click',e=>{
+  e.stopPropagation();
+  if(!(state==='FOCUS'||state==='NUDGE'||state==='PAUSED')) return;
+  if(quitTapArmed){ resetQuitTap(); endSession(false); return; }
+  quitTapArmed=true;
+  bQuit.querySelector('span').textContent='もう一度押して終了';
+  sayRaw(quitConfirmLine());
+  appStatus.textContent='終了する場合は、もう一度「終了」を押してください';
+  quitTapTimer=setTimeout(resetQuitTap,4000);
+});
 
 const raycaster=new THREE.Raycaster();
 // 家をタップ：情報カード（所持金・進捗・記録）を出す。常設せず、見たいときだけ。
 const topRowEl=document.getElementById('topRow'), tapHintEl=document.getElementById('tapHint');
+function infoPinned(){return matchMedia('(min-width:48rem) and (min-height:42.01rem)').matches;}
+let infoWasPinned=infoPinned();
 function toggleInfo(force){
   const open=(force!==undefined)?force:!topRowEl.classList.contains('open');
   topRowEl.classList.toggle('open',open);
+  topRowEl.inert=!open;
+  topRowEl.setAttribute('aria-hidden',String(!open));
+  infoBtn.setAttribute('aria-expanded',String(open));
   if(open) tapHintEl.classList.remove('show');
 }
+function syncInfoPanel(){
+  const pinned=infoPinned();
+  if(uiScreen==='HOME'&&(pinned||infoWasPinned))toggleInfo(pinned);
+  infoWasPinned=pinned;
+}
+addEventListener('resize',syncInfoPanel);
+infoBtn.addEventListener('click',()=>toggleInfo());
 function tryHouseTap(clientX,clientY){
   if(uiScreen!=='HOME') return false;
   const rect=cv.getBoundingClientRect();
@@ -1625,8 +2135,8 @@ function tryNudgeTap(clientX,clientY){
   raycaster.setFromCamera(ndc,camera);
   const hits=raycaster.intersectObject(man,true);
   if(hits.length){
-    if(state==='FOCUS'){ setState('NUDGE'); say('nudge'); }
-    else { setState('FOCUS'); say('back'); }
+    if(state==='FOCUS'){ pauseSession('NUDGE'); say('nudge'); }
+    else { resumeSession(); say('back'); }
   }
 }
 
@@ -1636,19 +2146,23 @@ function addLog(min,ok,tag){
   recN++;
   const d=document.createElement('span');
   d.className='rec '+(ok?'ok':'ng');
-  d.textContent=min+'分'+(tag?' '+tag:'')+' '+(ok?'完了':'中断');
+  d.textContent=(min>0?min+'分':'1分未満')+(tag?' '+tag:'')+' '+(ok?'完了':'中断');
   logList.prepend(d);
   while(logList.children.length>7) logList.removeChild(logList.lastChild);
 }
+function renderRecentLogs(){
+  recN=0;
+  logList.innerHTML='<span id="logEmpty">終えた分も、途中でやめた分も残ります。</span>';
+  store.recent.forEach(item=>addLog(item.min,item.ok,item.tag));
+}
 
-// ===== ループ =====
-recordVisit();
+// ===== START前の準備（訪問記録と描画ループはタイトル画面の後に開始） =====
 updateHaramaki(stageIdx);
 applyNeglect(visitAbsence);
 refreshLenSuggestion();
 hideDayQuestion();
 setScreen('HOME');
-setLv(1); setButtons(); updHUD();
+setLv(closenessTier()); setButtons(); updateSoundButton(); updHUD(); renderRecentLogs();
 
 // ===== 起動演出：まずおじさんに寄って、こちらに気づかせる =====
 // 残高ではなく「不在をどう過ごしていたか」から画面を始める。
@@ -1664,23 +2178,30 @@ function greetLine(){
 }
 function runIntro(){
   uiEl.classList.add('intro');
+  uiEl.setAttribute('inert','');
+  bStart.disabled=true;
   // 導入はおじさんに寄った画。歩き回らせず、こちらを向かせる
   waitT=99; act=null;
   az=CAM_GREET.az; el=CAM_GREET.el; zoom=CAM_GREET.zoom;
   lookX=CAM_GREET.lx; lookY=CAM_GREET.ly; lookZ=CAM_GREET.lz; updCam();
-  setTimeout(()=>{ sayLine(greetLine()); nodT=0; }, 550);
+  setTimeout(()=>{
+    if(uiScreen==='HOME'&&state==='IDLE'){sayLine(greetLine());nodT=0;}
+  }, 550);
   setTimeout(()=>{                       // 引いて家全体を見せる
-    startCamTween(CAM_IDLE,1.5);
     uiEl.classList.remove('intro');
-    waitT=1.2; newWaypoint();
+    uiEl.removeAttribute('inert');
+    setButtons();
+    if(uiScreen==='HOME'&&state==='IDLE'){
+      startCamTween(CAM_IDLE,1.5);
+      waitT=1.2; newWaypoint();
+    }
   }, 2300);
   if(!store.tutorialHome){
-    setTimeout(()=>{ if(tutActive) return; tapHintEl.classList.add('show');
+    setTimeout(()=>{ if(tutActive||uiScreen!=='HOME'||state!=='IDLE') return; tapHintEl.classList.add('show');
       setTimeout(()=>tapHintEl.classList.remove('show'),4200); }, 4200);
     store.tutorialHome=true; saveStore();
   }
 }
-runIntro();
 
 // ===== 初回だけの導線チュートリアル =====
 // タイトル画面が消えた直後、第2の<script>から showIntroTutorial() を呼ぶ。
@@ -1689,7 +2210,7 @@ runIntro();
 // 囲んだ穴（スポットライト）から明るく覗かせ、それ以外のタップは帯でブロックする。
 // ユーザーが実際にそのボタンを押した瞬間（bStart/bPickStart/endSession側から
 // tutGoto()を呼んで）次のステップへ進み、セッションの完了まで追従する。
-let tutActive=false, tutStepKey=null, tutTargetEl=null, tutRAF=null;
+let tutActive=false, tutStepKey=null, tutTargetEl=null, tutRAF=null, tutA11yState=null;
 const tutOverlayEl=document.getElementById('tutOverlay');
 const tutHoleEl=document.getElementById('tutHole');
 const tutCalloutEl=document.getElementById('tutCallout');
@@ -1698,15 +2219,65 @@ const tutBars={
   l:document.getElementById('tutBarL'), r:document.getElementById('tutBarR'),
 };
 const TUTORIAL_STEPS={
-  home:  '<b>①</b> おじさんは自分の分身。ここをタップして一緒に集中を始めよう。',
-  pick:  '<b>②</b> 時間とタグを選んだら、ここでセッション開始。',
-  focus: '<b>③</b> ここが残り時間ゲージ。タップで一時停止・やめるを出せる。おじさんをタップするとサボりだすよ。まずはこのまま集中してみよう。',
+  home:'<h2>まずは時間を決めよう</h2><p>「一緒に始める」から、今日の集中時間を選べます。</p>',
+  'pick-settings':'<h2>無理のない長さで</h2><p>時間とタグはここで変更できます。おすすめは目印として使ってください。</p><div class="tutActions"><button class="btn sky" id="tutNext">次へ</button></div>',
+  'pick-start':'<h2>準備できたら開始</h2><p>選んだ内容でタイマーを始めます。記録はこのブラウザに残ります。</p>',
+  focus:'<h2>残り時間はここ</h2><p>押すと一時停止、休憩、終了ができます。音のON/OFFも右上からいつでも変更できます。</p><div class="tutActions"><button class="btn primary" id="tutFinish">わかった</button></div>',
 };
+function captureTutorialA11yState(){
+  if(tutA11yState) return;
+  const background=[stageHost,coin,tapHintEl,focusHintEl,...uiEl.children];
+  tutA11yState=background.map(el=>({
+    el,
+    inert:el.hasAttribute('inert'),
+    ariaHidden:el.getAttribute('aria-hidden'),
+  }));
+}
+function isolateTutorialTarget(target){
+  captureTutorialA11yState();
+  tutA11yState.forEach(({el})=>{
+    el.setAttribute('inert','');
+    el.setAttribute('aria-hidden','true');
+  });
+  if(!target) return;
+  let container=target;
+  if(uiEl.contains(target)){
+    while(container.parentElement&&container.parentElement!==uiEl) container=container.parentElement;
+  }
+  const record=tutA11yState.find(item=>item.el===container);
+  if(record){
+    container.removeAttribute('inert');
+    container.removeAttribute('aria-hidden');
+  }
+}
+function restoreTutorialA11yState(){
+  if(!tutA11yState) return;
+  tutA11yState.forEach(({el,inert,ariaHidden})=>{
+    el.toggleAttribute('inert',inert);
+    if(ariaHidden===null) el.removeAttribute('aria-hidden');
+    else el.setAttribute('aria-hidden',ariaHidden);
+  });
+  tutA11yState=null;
+}
+function revealTutorialTarget(el){
+  if(!uiEl.contains(el)) return;
+  const viewportRect=uiEl.getBoundingClientRect();
+  const targetRect=el.getBoundingClientRect();
+  const breathingRoom=14;
+  if(targetRect.bottom>viewportRect.bottom-breathingRoom){
+    uiEl.scrollTop+=targetRect.bottom-(viewportRect.bottom-breathingRoom);
+  }else if(targetRect.top<viewportRect.top+breathingRoom){
+    uiEl.scrollTop-=viewportRect.top+breathingRoom-targetRect.top;
+  }
+}
 function tutPositionAround(el){
   const pr=phone.getBoundingClientRect(), r=el.getBoundingClientRect(), pad=10;
+  const holeTop=Math.min(pr.height,Math.max(0,r.top-pr.top-pad));
+  const holeBottom=Math.max(holeTop,Math.min(pr.height,r.bottom-pr.top+pad));
+  const leftEdge=Math.min(pr.width,Math.max(0,r.left-pr.left-pad));
+  const rightEdge=Math.max(leftEdge,Math.min(pr.width,r.right-pr.left+pad));
   const hole={
-    left: Math.max(0,r.left-pr.left-pad), top: Math.max(0,r.top-pr.top-pad),
-    right: Math.min(pr.width,r.right-pr.left+pad), bottom: Math.min(pr.height,r.bottom-pr.top+pad),
+    left:leftEdge,top:holeTop,right:rightEdge,bottom:holeBottom,
   };
   const pw=pr.width, ph=pr.height;
   tutHoleEl.style.left=hole.left+'px'; tutHoleEl.style.top=hole.top+'px';
@@ -1715,75 +2286,164 @@ function tutPositionAround(el){
   tutBars.b.style.cssText=`left:0;top:${hole.bottom}px;width:${pw}px;height:${Math.max(0,ph-hole.bottom)}px`;
   tutBars.l.style.cssText=`left:0;top:${hole.top}px;width:${hole.left}px;height:${hole.bottom-hole.top}px`;
   tutBars.r.style.cssText=`left:${hole.right}px;top:${hole.top}px;width:${Math.max(0,pw-hole.right)}px;height:${hole.bottom-hole.top}px`;
-  const calloutW=210, calloutH=Math.min(150,ph*0.24);
+  const calloutW=Math.min(288,pw-24), calloutH=Math.min(190,ph*0.30);
   const top=(hole.bottom+16+calloutH<ph) ? hole.bottom+16 : Math.max(12,hole.top-16-calloutH);
   const left=Math.max(12,Math.min((hole.left+hole.right)/2-calloutW/2, pw-12-calloutW));
+  tutCalloutEl.style.width=calloutW+'px';
   tutCalloutEl.style.left=left+'px'; tutCalloutEl.style.top=top+'px';
 }
-function tutLoop(){
-  if(!tutActive||!tutTargetEl) return;
-  tutPositionAround(tutTargetEl);
-  tutRAF=requestAnimationFrame(tutLoop);
+function tutCoverAll(){
+  const pr=phone.getBoundingClientRect();
+  tutBars.t.style.cssText=`left:0;top:0;width:${pr.width}px;height:${pr.height}px`;
+  tutBars.b.style.cssText='width:0;height:0';tutBars.l.style.cssText='width:0;height:0';tutBars.r.style.cssText='width:0;height:0';
+  tutHoleEl.style.opacity='0';
+  const width=Math.min(336,pr.width-24);
+  tutCalloutEl.style.width=width+'px';
+  tutCalloutEl.style.left=Math.max(12,(pr.width-width)/2)+'px';
+  requestAnimationFrame(()=>{tutCalloutEl.style.top=Math.max(64,(pr.height-tutCalloutEl.offsetHeight)/2)+'px';});
 }
 function tutGoto(key){
   tutStepKey=key;
-  if(key==='done'){
-    if(tutRAF){ cancelAnimationFrame(tutRAF); tutRAF=null; }
+  if(tutRAF){cancelAnimationFrame(tutRAF);tutRAF=null;}
+  if(key==='welcome'){
     tutTargetEl=null;
+    tutOverlayEl.setAttribute('aria-modal','true');
+    isolateTutorialTarget(null);
     tutHoleEl.classList.remove('pulse');
-    tutHoleEl.style.opacity='0';
-    document.getElementById('tutSkip').style.display='none';
-    const pr=phone.getBoundingClientRect();
-    tutBars.t.style.cssText=`left:0;top:0;width:${pr.width}px;height:${pr.height}px`;
-    tutBars.b.style.cssText='width:0;height:0'; tutBars.l.style.cssText='width:0;height:0'; tutBars.r.style.cssText='width:0;height:0';
     tutCalloutEl.className='center';
-    tutCalloutEl.style.left=(pr.width/2-120)+'px'; tutCalloutEl.style.top=(pr.height/2-95)+'px';
-    tutCalloutEl.innerHTML='<div class="tut-emoji">🎉</div>お疲れ様！<br>この調子でおじさんと一緒に続けていこう。<button class="btn primary" id="tutDone">閉じる</button>';
-    document.getElementById('tutDone').addEventListener('click', tutClose);
+    tutCalloutEl.innerHTML='<h2>おじさんは、あなたの分身</h2><p>一緒に集中した時間が、ふたりの暮らしに変わります。まずは短い時間から試してみましょう。</p><div class="tutActions"><button class="btn primary" id="tutBegin">使い方を見る</button></div>';
+    tutCoverAll();
+    document.getElementById('tutBegin').addEventListener('click',()=>tutGoto('home'));
+    requestAnimationFrame(()=>document.getElementById('tutBegin').focus({preventScroll:true}));
     return;
   }
-  tutTargetEl = key==='home'?bStart : key==='pick'?bPickStart : focusGaugeEl;
+  tutOverlayEl.removeAttribute('aria-modal');
+  tutTargetEl=key==='home'?bStart:key==='pick-settings'?document.getElementById('pickTop'):key==='pick-start'?bPickStart:gaugeToggle;
+  revealTutorialTarget(tutTargetEl);
+  isolateTutorialTarget(tutTargetEl);
   tutCalloutEl.className='';
   tutCalloutEl.innerHTML=TUTORIAL_STEPS[key];
   tutHoleEl.style.opacity='1';
   tutHoleEl.classList.add('pulse');
-  tutPositionAround(tutTargetEl);
-  if(tutRAF) cancelAnimationFrame(tutRAF);
-  tutRAF=requestAnimationFrame(tutLoop);
+  tutRAF=requestAnimationFrame(()=>{tutPositionAround(tutTargetEl);tutRAF=null;const first=tutorialFocusables()[0];if(first)first.focus({preventScroll:true});});
+  const next=document.getElementById('tutNext');
+  if(next) next.addEventListener('click',()=>tutGoto('pick-start'));
+  const finish=document.getElementById('tutFinish');
+  if(finish) finish.addEventListener('click',tutClose);
 }
 function tutClose(){
   tutActive=false; tutStepKey=null; tutTargetEl=null;
   if(tutRAF){ cancelAnimationFrame(tutRAF); tutRAF=null; }
   tutOverlayEl.classList.remove('show');
+  tutOverlayEl.removeAttribute('aria-modal');
+  restoreTutorialA11yState();
   store.tutorialIntro=true; saveStore();
+  if(uiScreen==='HOME') bStart.focus();
+  else if(uiScreen==='PICK') bPickStart.focus();
+  else gaugeToggle.focus();
 }
 document.getElementById('tutSkip').addEventListener('click', tutClose);
-function showIntroTutorial(){
-  if(store.tutorialIntro) return;
+function showIntroTutorial(force=false){
+  if(store.tutorialIntro&&!force) return;
   tutActive=true;
   document.getElementById('tutSkip').style.display='';
   tutOverlayEl.classList.add('show');
-  tutGoto('home');
+  tutGoto('welcome');
 }
 // 右上の「?」からは、既に見ていても何度でも見返せる
 document.getElementById('helpBtn').addEventListener('click', ()=>{
   if(uiScreen!=='HOME'||state!=='IDLE') return;
-  store.tutorialIntro=false;
-  showIntroTutorial();
+  showIntroTutorial(true);
 });
+function tutorialFocusables(){
+  const callout=[...tutCalloutEl.querySelectorAll('button,input,[tabindex]:not([tabindex="-1"])')];
+  const target=tutTargetEl?(tutTargetEl.matches('button,input,[tabindex]:not([tabindex="-1"])')?[tutTargetEl]:[...tutTargetEl.querySelectorAll('button,input,[tabindex]:not([tabindex="-1"])')]):[];
+  return [...target,...callout,document.getElementById('tutSkip')].filter(el=>!el.disabled&&el.offsetParent!==null);
+}
+document.addEventListener('keydown',e=>{
+  if(!tutActive) return;
+  if(e.key==='Escape'){tutClose();return;}
+  if(e.key!=='Tab') return;
+  const items=tutorialFocusables(); if(!items.length)return;
+  const index=items.indexOf(document.activeElement);
+  if(e.shiftKey&&(index<=0)){e.preventDefault();items[items.length-1].focus();}
+  else if(!e.shiftKey&&(index<0||index===items.length-1)){e.preventDefault();items[0].focus();}
+});
+uiEl.addEventListener('scroll',()=>{
+  if(!tutActive||!tutTargetEl||tutRAF) return;
+  tutRAF=requestAnimationFrame(()=>{tutPositionAround(tutTargetEl);tutRAF=null;});
+},{passive:true});
+window.__ojimateRepositionTutorial=()=>{
+  if(!tutActive||tutRAF) return;
+  tutRAF=requestAnimationFrame(()=>{tutTargetEl?tutPositionAround(tutTargetEl):tutCoverAll();tutRAF=null;});
+};
 
 const clock=new THREE.Clock();
-function tick(){
-  const dt=Math.min(0.05,clock.getDelta()), t=clock.elapsedTime;
-  poseT+=dt;
+let lastFrameAt=0;
+function updateTimerDisplay(){
+  const p=Math.min(1,Math.max(0,sTime/SESSION_SEC));
+  gaugeFg.style.strokeDashoffset=GP*(1-p);
+  const rem=Math.max(0,Math.ceil(SESSION_MIN*60*(1-p)));
+  gaugeTime.textContent=String(Math.floor(rem/60)).padStart(2,'0')+':'+String(rem%60).padStart(2,'0');
+  gaugeToggle.setAttribute('aria-label','残り'+Math.ceil(rem/60)+'分。セッション操作を開く');
+}
+function restoreActiveSession(){
+  const active=store.activeSession;
+  if(!active) return false;
+  SESSION_MIN=active.durationMin; SESSION_SEC=SESSION_MIN*SEC_PER_MIN; sessionTag=active.tag||'勉強';
+  const gap=active.running?Math.max(0,(Date.now()-active.updatedAt)/1000):0;
+  sessionBaseElapsed=Math.min(SESSION_SEC,active.elapsedSec+gap); sTime=sessionBaseElapsed; sessionStartedAt=0;
+  document.querySelectorAll('#pickTags button').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.tag===sessionTag)));
+  setScreen('FOCUS'); setState('PAUSED'); updateTimerDisplay();
+  sayRaw(sessionBaseElapsed>=SESSION_SEC?'留守のあいだに、ちょうど終わっとったで。':'前の続き、ここに置いといたで。');
+  return true;
+}
+restoredSession=restoreActiveSession();
+function launchApp(){
+  if(appStarted) return;
+  appStarted=true;
+  appMain.hidden=false; appMain.inert=false; appMain.removeAttribute('inert'); appMain.removeAttribute('aria-hidden');
+  const rendererReady=initializeMainRenderer();
+  phone.classList.toggle('is-2d',!rendererReady);
+  recordVisit(); setLv(closenessTier()); updHUD();
+  if(!mainLoopStarted){ mainLoopStarted=true; clock.start(); tick(); }
+  if(restoredSession){
+    if(sessionBaseElapsed>=SESSION_SEC){ setTimeout(()=>endSession(true),250); }
+    else{
+      setScreen('FOCUS'); setButtons(); updateTimerDisplay();
+      appStatus.textContent='前回のセッションを一時停止した状態で復元しました';
+      setTimeout(()=>gaugeToggle.focus(),120);
+    }
+    return;
+  }
+  setScreen('HOME');
+  if(rendererReady) runIntro();
+  if(!rendererReady){
+    uiEl.classList.remove('intro');uiEl.removeAttribute('inert');setButtons();
+    sayRaw('3Dはお休みやけど、タイマーはちゃんと動くで。');
+  }
+  if(rendererReady&&!reduceMotionQuery.matches) setTimeout(showDragHint,900);
+  if(!store.tutorialIntro) setTimeout(()=>{
+    if(uiScreen==='HOME'&&state==='IDLE'&&!uiEl.classList.contains('intro')) showIntroTutorial();
+  },rendererReady?2600:500);
+  else setTimeout(()=>bStart.focus(),rendererReady?2500:120);
+}
+window.launchApp=launchApp;
+addEventListener('pagehide',persistActiveSession);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)persistActiveSession();});
+function tick(frameAt=performance.now()){
+  const minFrameGap=reduceMotionQuery.matches?100:(state==='FOCUS'?0:33);
+  if(frameAt-lastFrameAt<minFrameGap){if(mainLoopStarted)requestAnimationFrame(tick);return;}
+  lastFrameAt=frameAt;
+  const dt=Math.min(0.05,clock.getDelta()), t=reduceMotionQuery.matches?0:clock.elapsedTime;
+  poseT+=reduceMotionQuery.matches?0:dt;
 
-  if(state==='FOCUS'&&!confirmingQuit){
-    sTime+=dt;
-    const p=Math.min(1,sTime/SESSION_SEC);
-    gaugeFg.style.strokeDashoffset=GP*(1-p);
-    const rem=Math.max(0,SESSION_MIN*60*(1-p));
-    gaugeTime.textContent=String(Math.floor(rem/60)).padStart(2,'0')+':'+String(Math.floor(rem%60)).padStart(2,'0');
-    if(p>=1) endSession(true);
+  if(state==='FOCUS'){
+    sTime=Math.min(SESSION_SEC,currentSessionSeconds());
+    updateTimerDisplay();
+    const persistSlot=Math.floor(sTime/5);
+    if(persistSlot!==lastSessionPersist){lastSessionPersist=persistSlot;persistActiveSession();}
+    if(sTime>=SESSION_SEC){endSession(true);}
   }
   if(camTween){
     camTween.t+=dt;
@@ -1983,15 +2643,15 @@ function tick(){
     if(kk>=1){p.o.scale.set(1,1,1);pops.splice(i,1);}
   }
 
-  renderer.render(scene,camera);
-  requestAnimationFrame(tick);
+  if(renderer)renderer.render(scene,camera);
+  if(mainLoopStarted) requestAnimationFrame(tick);
 }
-tick();
+}
 </script>
 
 <!-- ===== タイトル画面：起動時のオーバーレイ。独立した3Dシーンなので、下の本体アプリとは完全に隔離してIIFEに包む ===== -->
 <script>
-(function(){
+if(window.ojimateWebGLReady){try{(function(){
   const ttFrame=document.getElementById('ttFrame');
 
   for(let i=0;i<34;i++){
@@ -2330,14 +2990,22 @@ tick();
   const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
   let intro=reduce?1:0, drag=-1, stopped=false;
 
-  document.getElementById('ttStart').addEventListener('click',()=>{
+  const ttStart=document.getElementById('ttStart');
+  ttStart.addEventListener('click',()=>{
+    ttStart.disabled=true;
     drag=0;
     ttFrame.classList.add('tt-hide');
     setTimeout(()=>{
       stopped=true;
-      try{ renderer.dispose(); }catch(e){}
+      removeEventListener('resize',resize);
+      scene.traverse(object=>{
+        if(object.geometry) object.geometry.dispose();
+        const materials=Array.isArray(object.material)?object.material:[object.material];
+        materials.filter(Boolean).forEach(material=>{Object.values(material).forEach(value=>{if(value&&value.isTexture)value.dispose();});material.dispose();});
+      });
+      try{ renderer.dispose();renderer.forceContextLoss(); }catch(e){}
       ttFrame.remove();
-      showIntroTutorial();
+      launchApp();
     },560);
   });
 
@@ -2386,7 +3054,12 @@ tick();
     requestAnimationFrame(tick);
   }
   tick();
-})();
+})();}catch(e){window.ojimateWebGLReady=false;showStartupFallback();}}
+</script>
+<script>
+if('serviceWorker' in navigator&&location.protocol==='https:'){
+  addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}),{once:true});
+}
 </script>
 </body>
 </html>

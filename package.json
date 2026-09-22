@@ -1,0 +1,8 @@
+{
+  "name": "ojimate",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node tests/smoke.mjs && node --check worker/index.js && node --check sw.js"
+  }
+}

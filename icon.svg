@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">OjiMate</title>
+  <desc id="desc">黄色い背景に、おじさんの顔と時計を組み合わせたアイコン</desc>
+  <rect width="512" height="512" rx="112" fill="#F5C84C"/>
+  <circle cx="256" cy="246" r="142" fill="#FFF9EA" stroke="#443A2E" stroke-width="24"/>
+  <path d="M155 189c20-63 59-94 117-94 62 0 105 39 121 104-35-18-71-28-108-28-47 0-90 14-130 40z" fill="#443A2E"/>
+  <circle cx="205" cy="246" r="13" fill="#443A2E"/>
+  <circle cx="307" cy="246" r="13" fill="#443A2E"/>
+  <path d="M186 306c29-31 60-30 70 2 10-32 41-33 70-2-16 45-53 57-70 23-17 34-54 22-70-23z" fill="#443A2E"/>
+  <path d="M256 246v-72m0 72 48 30" fill="none" stroke="#E76F51" stroke-width="18" stroke-linecap="round"/>
+  <circle cx="256" cy="246" r="12" fill="#E76F51"/>
+  <path d="M144 408h224" stroke="#443A2E" stroke-width="24" stroke-linecap="round"/>
+</svg>

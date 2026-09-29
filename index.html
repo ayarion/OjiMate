@@ -214,8 +214,13 @@
   /* ===== タイトル画面（起動時のオーバーレイ、STARTでホームへ） ===== */
   #ttFrame{position:absolute;inset:0;z-index:40;overflow:hidden;
     background:linear-gradient(180deg,var(--color-title-sky-top) 0%,var(--color-title-sky-bottom) 28%,var(--color-title-horizon) 42%);
-    transition:opacity .5s ease}
-  #ttFrame.tt-hide{opacity:0;pointer-events:none}
+    transition:transform 900ms var(--ease-in-out)}
+  #ttFrame.tt-leaving{transform:translateY(105%);pointer-events:none}
+  #ttReveal{position:absolute;inset:0;z-index:39;pointer-events:none;
+    background:linear-gradient(180deg,var(--color-title-sky-bottom) 0%,#e7f8fb 48%,#fff 100%);
+    opacity:1;transition:opacity var(--dur-long) var(--ease-out)}
+  #ttReveal[hidden]{display:none}
+  #ttReveal.tt-fading{opacity:0}
   #ttRays{position:absolute;left:50%;top:28%;width:250%;aspect-ratio:1;transform:translate(-50%,-50%);
     background:repeating-conic-gradient(from 0deg,rgba(255,255,255,.26) 0deg 5deg,rgba(255,255,255,0) 5deg 14deg);
     -webkit-mask-image:radial-gradient(circle,rgba(0,0,0,.24) 0%,var(--color-ink) 24%,rgba(0,0,0,.46) 46%,transparent 74%);
@@ -409,7 +414,8 @@
   #coin{color:var(--color-sun-ink);text-shadow:0 2px 0 var(--color-paper);font-size:var(--text-md)}
   #coin.go{animation:rise 1.2s var(--ease-out)}
 
-  #ttFrame{z-index:var(--z-modal);transition:opacity var(--dur-long) var(--ease-in)}
+  #ttFrame{z-index:var(--z-modal)}
+  #ttReveal{z-index:calc(var(--z-modal) - 1)}
   #ttLogo{animation:ttLogoIn var(--dur-long) var(--ease-out) both}
   #ttLead{position:absolute;z-index:3;left:50%;top:34%;width:min(88%,30rem);transform:translateX(-50%);margin:0;
     color:var(--color-ink);font-size:clamp(.875rem,3.5vw,1.15rem);font-weight:700;line-height:1.55;text-align:center;
@@ -421,9 +427,6 @@
     transition:transform var(--dur-micro) var(--ease-out),box-shadow var(--dur-micro) var(--ease-out)}
   #ttStart:active{transform:translateX(-50%) translateY(3px);box-shadow:0 2px 0 var(--color-coral-deep),0 8px 18px oklch(from var(--color-ink) l c h / .24)}
   #ttStart:focus-visible{outline-color:var(--color-focus)}
-  #ttMeta{position:absolute;z-index:3;inset-inline:var(--space-md);bottom:max(var(--space-md),env(safe-area-inset-bottom));margin:0;
-    color:var(--color-ink);font-size:.6875rem;font-weight:700;text-align:center;text-shadow:0 1px 0 oklch(from var(--color-paper) l c h / .65)}
-
   @media (hover:hover) and (pointer:fine){
     .utilityBtn:hover,#pickAdvice:hover,#pickTags button:hover{transform:translateY(-1px);background-color:var(--color-paper)}
     .btn:hover{transform:translateY(-2px);box-shadow:0 6px 0 var(--btn-edge),0 12px 22px -7px var(--btn-cast)}
@@ -449,13 +452,13 @@
     #pickTime{font-size:3.5rem}
     #focusGauge{right:var(--space-lg);bottom:var(--space-lg)}
     #ui.screen-focus #say{left:var(--space-lg);right:8.5rem;bottom:var(--space-lg)}
-    #ttLogo{top:4%;align-items:flex-start;left:clamp(2rem,6vw,6rem);right:auto;width:min(44rem,55%)}
-    #ttLogoMain{width:min(100%,38rem)}
-    #ttLogoSub{width:min(92%,32rem)}
-    #ttLead{left:clamp(2rem,6vw,6rem);top:40%;width:min(30rem,42%);transform:none;text-align:left;font-size:clamp(1rem,1.5vw,1.35rem)}
-    #ttStart{left:auto;right:clamp(2rem,6vw,6rem);bottom:clamp(3.5rem,8vh,6rem);transform:none;font-size:1.25rem}
+    #ttLogo{top:clamp(2rem,7vh,4.5rem);align-items:flex-start;left:clamp(2rem,6vw,6rem);right:auto;width:min(42%,34rem)}
+    #ttLogoMain{width:100%}
+    #ttLogoSub{width:92%}
+    #ttLead{left:clamp(2rem,6vw,6rem);top:39%;width:min(27rem,38%);transform:none;text-align:left;font-size:clamp(1rem,1.5vw,1.35rem)}
+    #ttStart{left:clamp(2rem,6vw,6rem);right:auto;bottom:clamp(3rem,11vh,7rem);transform:none;font-size:1.25rem}
     #ttStart:active{transform:translateY(3px)}
-    #ttMeta{left:auto;right:clamp(2rem,6vw,6rem);bottom:var(--space-lg);width:auto;text-align:right;font-size:var(--text-xs)}
+    #ttRays{left:72%}
     .mobileBreak{display:none}
     @media (hover:hover) and (pointer:fine){#ttStart:hover{transform:translateY(-2px)}}
   }
@@ -480,9 +483,8 @@
     #ttLogoMain{width:100%}
     #ttLogoSub{width:94%}
     #ttLead{left:var(--space-lg);top:52%;width:38%;transform:none;text-align:left;font-size:.8rem;line-height:1.4}
-    #ttStart{left:auto;right:var(--space-lg);bottom:3.5rem;width:34%;transform:none;font-size:1rem;padding:var(--space-sm) var(--space-md)}
+    #ttStart{left:var(--space-lg);right:auto;bottom:2rem;width:38%;transform:none;font-size:1rem;padding:var(--space-sm) var(--space-md)}
     #ttStart:active{transform:translateY(3px)}
-    #ttMeta{left:auto;right:var(--space-lg);bottom:var(--space-xs);width:44%;text-align:right;font-size:.6rem}
     @media (hover:hover) and (pointer:fine){#ttStart:hover{transform:translateY(-2px)}}
   }
 
@@ -498,8 +500,7 @@
     #ttLogo{top:2%;left:var(--space-xl);width:min(38%,28rem)}
     #ttLogoSub{width:min(92%,24rem)}
     #ttLead{left:var(--space-xl);top:54%;width:36%;font-size:.9rem;line-height:1.4}
-    #ttStart{right:var(--space-xl);bottom:3.75rem;width:min(22rem,34%);font-size:1rem;padding:var(--space-sm) var(--space-md)}
-    #ttMeta{right:var(--space-xl);bottom:var(--space-xs);width:40%;font-size:.65rem}
+    #ttStart{left:var(--space-xl);right:auto;bottom:2rem;width:min(22rem,36%);font-size:1rem;padding:var(--space-sm) var(--space-md)}
   }
 
   @media (max-width:22rem){
@@ -518,6 +519,7 @@
 
   @media (prefers-reduced-motion:reduce){
     *,*::before,*::after{animation-duration:150ms!important;animation-iteration-count:1!important;transition-duration:150ms!important}
+    #ttFrame.tt-leaving{transform:none;opacity:0;transition-property:opacity}
     #ttRays,#ttC1,#ttC2,#ttLogo,#ttStart{animation:none!important}
     #tutHole{box-shadow:0 0 0 4px var(--color-paper),0 0 0 9px oklch(from var(--color-sun) l c h / .5)}
   }
@@ -525,6 +527,7 @@
 </head>
 <body>
 <div id="phone">
+  <div id="ttReveal" hidden aria-hidden="true"></div>
   <section id="ttFrame" aria-labelledby="appTitle">
     <h1 id="appTitle" class="srOnly">OjiMate — おじさんと集中するタイマー</h1>
     <div id="ttRays"></div>
@@ -564,7 +567,6 @@
 
     <p id="ttLead">集中したぶんだけ、<br class="mobileBreak">ふたりの暮らしが育っていく。</p>
     <button id="ttStart" type="button">おじさんと始める</button>
-    <p id="ttMeta">記録はこのブラウザに保存 · 音はあとから変更できます</p>
   </section>
   <main id="appMain" hidden inert aria-hidden="true">
   <div id="stage"></div>
@@ -670,6 +672,29 @@
 // Three.jsが読み込めればコアUIは起動する。WebGL生成は各シーンで試し、失敗時は2D操作パネルを残す。
 window.ojimateWebGLReady=Boolean(window.THREE);
 window.ojimateForce2D=(location.hostname==='localhost'||location.hostname==='127.0.0.1')&&new URLSearchParams(location.search).get('force2d')==='1';
+function leaveTitleScreen(cleanup=()=>{}){
+  const frame=document.getElementById('ttFrame');
+  if(!frame||frame.classList.contains('tt-leaving')) return;
+  const reveal=document.getElementById('ttReveal');
+  reveal.hidden=false;
+  frame.classList.add('tt-leaving');
+  let finished=false;
+  const finish=()=>{
+    if(finished) return;
+    finished=true;
+    cleanup();
+    frame.remove();
+    launchApp();
+    requestAnimationFrame(()=>{
+      reveal.classList.add('tt-fading');
+      setTimeout(()=>reveal.remove(),500);
+    });
+  };
+  frame.addEventListener('transitionend',event=>{
+    if(event.target===frame&&(event.propertyName==='transform'||event.propertyName==='opacity')) finish();
+  });
+  setTimeout(finish,1100);
+}
 function showStartupFallback(){
   const retry=document.getElementById('ttStart');
   const canUseCore=typeof window.THREE!=='undefined'&&typeof window.launchApp==='function';
@@ -677,12 +702,10 @@ function showStartupFallback(){
   document.getElementById('ttLead').textContent=canUseCore
     ?'3Dを使えない環境のため、軽量表示でタイマーを開きます。'
     :'アプリを読み込めませんでした。通信環境を確認してください。';
-  document.getElementById('ttMeta').textContent=canUseCore?'記録とタイマーはそのまま使えます':'記録データは消えません';
   retry.textContent=canUseCore?'軽量版で始める':'読み込み直す';
   retry.addEventListener('click',()=>{
     if(!canUseCore){location.reload();return;}
-    document.getElementById('ttFrame')?.remove();
-    window.launchApp();
+    leaveTitleScreen();
   },{once:true});
 }
 if(!window.ojimateWebGLReady){
@@ -2980,8 +3003,9 @@ if(window.ojimateWebGLReady){try{(function(){
   function updCam(){
     const f=FRUST;
     camera.left=-f*W/H/2;camera.right=f*W/H/2;camera.top=f/2;camera.bottom=-f/2;
-    camera.position.set(1.6,2.7,6.2);
-    camera.lookAt(0.05,1.0,0.3);
+    const shift=W>=768&&W/H>1.2?-(f*W/H)*0.22:0;
+    camera.position.set(1.6+shift,2.7,6.2);
+    camera.lookAt(0.05+shift,1.0,0.3);
     camera.updateProjectionMatrix();
   }
   function resize(){ W=host.clientWidth;H=host.clientHeight; renderer.setSize(W,H); updCam(); }
@@ -2994,8 +3018,7 @@ if(window.ojimateWebGLReady){try{(function(){
   ttStart.addEventListener('click',()=>{
     ttStart.disabled=true;
     drag=0;
-    ttFrame.classList.add('tt-hide');
-    setTimeout(()=>{
+    leaveTitleScreen(()=>{
       stopped=true;
       removeEventListener('resize',resize);
       scene.traverse(object=>{
@@ -3004,9 +3027,7 @@ if(window.ojimateWebGLReady){try{(function(){
         materials.filter(Boolean).forEach(material=>{Object.values(material).forEach(value=>{if(value&&value.isTexture)value.dispose();});material.dispose();});
       });
       try{ renderer.dispose();renderer.forceContextLoss(); }catch(e){}
-      ttFrame.remove();
-      launchApp();
-    },560);
+    });
   });
 
   const clockT=new THREE.Clock();

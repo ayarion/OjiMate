@@ -5,6 +5,8 @@
 
 公開版: [https://tsukuriba.org/OjiMate/](https://tsukuriba.org/OjiMate/)
 
+現在の画面・機能・保存仕様は [要件定義](docs/requirements.md) にまとめています。
+
 ## 主な機能
 
 - **モバイル・PC対応** — モバイルは3D風景を中心にした一画面、幅768px以上のPCでは3D風景と操作パネルを並べたワークベンチ表示になります。横向き・狭い画面・safe areaにも対応しています。
